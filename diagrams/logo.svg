@@ -1,26 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-  <!-- Folder-cylinder hybrid: filesystem on top, database underneath -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="16 21 88 80" width="88" height="80">
+  <defs>
+    <linearGradient id="folderGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4A90D9" />
+      <stop offset="100%" stop-color="#336791" />
+    </linearGradient>
+    <linearGradient id="tabGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5BA0E8" />
+      <stop offset="100%" stop-color="#4A90D9" />
+    </linearGradient>
+  </defs>
 
-  <!-- Folder tab -->
-  <path d="M25 34 L25 26 Q25 22 29 22 L46 22 Q50 22 52 26 L56 34"
-        fill="#336791" stroke="none" />
+  <!-- Folder tab (filesystem identity, lighter blue) -->
+  <path d="M22 36 L22 27 Q22 23 26 23 L44 23 Q47 23 49 27 L53 36"
+        fill="url(#tabGrad)" />
 
-  <!-- Folder body -->
-  <rect x="20" y="34" width="80" height="36" rx="3" fill="#336791" />
+  <!-- Folder body (main shape) -->
+  <rect x="18" y="36" width="84" height="30" rx="4" fill="url(#folderGrad)" />
 
-  <!-- Transition into cylinder -->
-  <ellipse cx="60" cy="70" rx="40" ry="10" fill="#336791" />
-  <rect x="20" y="70" width="80" height="22" fill="#336791" />
-  <ellipse cx="60" cy="92" rx="40" ry="10" fill="#2a5680" />
+  <!-- Database cylinder bottom (Postgres identity, darker) -->
+  <ellipse cx="60" cy="66" rx="42" ry="9" fill="#336791" />
+  <rect x="18" y="66" width="84" height="24" fill="#336791" />
+  <ellipse cx="60" cy="90" rx="42" ry="9" fill="#2A5680" />
 
-  <!-- Cylinder top highlight -->
-  <ellipse cx="60" cy="70" rx="35" ry="7" fill="none" stroke="white" stroke-width="0.7" opacity="0.2" />
+  <!-- Cylinder platter lines (visible data rows) -->
+  <line x1="28" y1="74" x2="92" y2="74" stroke="white" stroke-width="1" opacity="0.25" />
+  <line x1="28" y1="82" x2="92" y2="82" stroke="white" stroke-width="1" opacity="0.25" />
 
-  <!-- Row separator lines (data rows inside) -->
-  <line x1="30" y1="45" x2="90" y2="45" stroke="white" stroke-width="1" opacity="0.15" />
-  <line x1="30" y1="55" x2="90" y2="55" stroke="white" stroke-width="1" opacity="0.15" />
-  <line x1="30" y1="65" x2="90" y2="65" stroke="white" stroke-width="1" opacity="0.15" />
-
-  <!-- Terminal prompt (center, crisp) -->
-  <text x="40" y="60" font-family="'SF Mono', 'Fira Code', Menlo, Consolas, monospace" font-size="20" font-weight="bold" fill="white" opacity="0.9">$_</text>
+  <!-- Terminal prompt (bold, centered, white) -->
+  <text x="60" y="57"
+        text-anchor="middle"
+        font-family="'SF Mono','Fira Code',Menlo,Consolas,monospace"
+        font-size="19" font-weight="700"
+        fill="white" opacity="0.95"
+        letter-spacing="1">$_</text>
 </svg>
