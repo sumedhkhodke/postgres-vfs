@@ -4,7 +4,7 @@
 
 # postgres-vfs
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sumedhkhodke/postgres-vfs) [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.0-000000?style=flat&logo=bun&logoColor=white)](https://bun.sh) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%E2%89%A514-316192?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/) [![pgvector](https://img.shields.io/badge/pgvector-optional-4169E1?style=flat&logo=databricks&logoColor=white)](https://github.com/pgvector/pgvector) [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat&logo=opensourceinitiative&logoColor=white)](LICENSE) [![Star History](https://img.shields.io/github/stars/sumedhkhodke/postgres-vfs?style=flat&logo=github&label=Stars)](https://github.com/sumedhkhodke/postgres-vfs/stargazers)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sumedhkhodke/postgres-vfs) [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.0-000000?style=flat&logo=bun&logoColor=white)](https://bun.sh) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%E2%89%A514-316192?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/) [![pgvector](https://img.shields.io/badge/pgvector-optional-4169E1?style=flat&logo=databricks&logoColor=white)](https://github.com/pgvector/pgvector) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat&logo=opensourceinitiative&logoColor=white)](LICENSE) [![Star History](https://img.shields.io/github/stars/sumedhkhodke/postgres-vfs?style=flat&logo=github&label=Stars)](https://github.com/sumedhkhodke/postgres-vfs/stargazers)
 
 **A PostgreSQL-backed virtual filesystem for AI agents.**
 
@@ -20,17 +20,17 @@ Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash
 
 ---
 
-## Why
+## Why do we `postgres-vfs`?
 
-Modern LLMs are fluent in shell. They've ingested enormous amounts of `grep`, `find`, `cat`, `sed`, and `awk` during training, which makes a bash tool over a filesystem a surprisingly high-leverage interface for *non-coding* agents too (email, sales, support, docs). `grep` returns exact matches. Directories map to real data hierarchies. Agents load only the context they need, when they need it. See [this note](https://x.com/trq212/status/1982869394482139206) on how swapping custom tools for bash + filesystem cut cost and improved output in production (part of the broader MCP-vs-CLI conversation).
+Modern LLMs are fluent in shell. They've ingested enormous amounts of `grep`, `find`, `cat`, `sed`, and `awk` during training, which makes a bash tool over a filesystem a surprisingly high-leverage interface for *non-coding* agents too (email, sales, support, docs). `grep` returns exact matches. Directories map to real data hierarchies. Agents load only the context they need, when they need it. See [this note](https://x.com/trq212/status/1982869394482139206) on how swapping custom tools for bash + filesystem cut cost and improved output in production (part of the broader MCP-vs-CLI_with_fs conversation).
 
 But a real filesystem is a poor production substrate for agents:
 
 - **Sandboxing is slow and expensive.** Per-container spin-up takes seconds, and isolated disks add up fast at agent scale.
 - **No built-in multi-tenancy.** Isolating agents means managing Unix users, chroots, or per-session containers.
 - **`grep -r` is linear.** Byte-scanning thousands of files doesn't scale as workspaces grow.
-- **State is ephemeral.** Files die with the sandbox unless you bolt on volumes, and backup/restore is per-box.
-- **No indexed search.** No FTS, no trigram, no vectors. Every agent reinvents retrieval on top of raw files.
+- **State is ephemeral in a sandbox** Files die with the sandbox unless you bolt on volumes, and backup/restore is per-box.
+- **No indexed search in a regular filesystem** It doesnt have FTS, trigram, no vectors. Every agent reinvents retrieval on top of raw files.
 
 > `postgres-vfs` collapses bash + filesystem onto a single Postgres table. Agents keep their native `grep` / `cat` / `find` workflow. Isolation is row-level. Search is indexed (FTS + trigram + optional pgvector). State persists across sessions. A new workspace spins up in milliseconds.
 
@@ -83,6 +83,8 @@ But a real filesystem is a poor production substrate for agents:
 9. **[Scope and Limitations](#9-scope-and-limitations)**
 
 10. **[Glossary](#10-glossary)**
+
+11. **[Contributing](#contributing)**
 
 ## 1. Getting Started
 
@@ -637,6 +639,10 @@ The 75+ supported commands are filesystem and text utilities (`grep`, `sed`, `aw
 - [just-bash by Vercel Labs](https://github.com/vercel-labs/just-bash) for the sandboxed bash interpreter
 - [agent-vfs](https://github.com/johannesmichalke/agent-vfs) for prior art taste on database-backed agent filesystems
 
+## Contributing
+
+Contributions are welcome. Please open an issue first to discuss what you'd like to change, then submit a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
 ## License
 
-MIT
+[Apache-2.0](LICENSE)
