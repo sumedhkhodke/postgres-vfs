@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- Folder-cylinder hybrid: filesystem on top, database underneath -->
+
+  <!-- Folder tab -->
+  <path d="M25 34 L25 26 Q25 22 29 22 L46 22 Q50 22 52 26 L56 34"
+        fill="#336791" stroke="none" />
+
+  <!-- Folder body -->
+  <rect x="20" y="34" width="80" height="36" rx="3" fill="#336791" />
+
+  <!-- Transition into cylinder -->
+  <ellipse cx="60" cy="70" rx="40" ry="10" fill="#336791" />
+  <rect x="20" y="70" width="80" height="22" fill="#336791" />
+  <ellipse cx="60" cy="92" rx="40" ry="10" fill="#2a5680" />
+
+  <!-- Cylinder top highlight -->
+  <ellipse cx="60" cy="70" rx="35" ry="7" fill="none" stroke="white" stroke-width="0.7" opacity="0.2" />
+
+  <!-- Row separator lines (data rows inside) -->
+  <line x1="30" y1="45" x2="90" y2="45" stroke="white" stroke-width="1" opacity="0.15" />
+  <line x1="30" y1="55" x2="90" y2="55" stroke="white" stroke-width="1" opacity="0.15" />
+  <line x1="30" y1="65" x2="90" y2="65" stroke="white" stroke-width="1" opacity="0.15" />
+
+  <!-- Terminal prompt (center, crisp) -->
+  <text x="40" y="60" font-family="'SF Mono', 'Fira Code', Menlo, Consolas, monospace" font-size="20" font-weight="bold" fill="white" opacity="0.9">$_</text>
+</svg>

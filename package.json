@@ -1,0 +1,32 @@
+{
+  "name": "postgres-vfs",
+  "version": "0.1.0",
+  "description": "Virtual filesystem for AI agents backed by PostgreSQL — ChromaFs-equivalent using just-bash",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "migrate": "bun run src/db/migrate.ts",
+    "test": "bun test",
+    "ui": "bun run src/ui/server.ts",
+    "build": "bun build src/index.ts --outdir dist --target node"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.86.1",
+    "bash-tool": "^1.3.16",
+    "just-bash": "^2.14.0",
+    "pgvector": "^0.2.0",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "ai": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "ai": {
+      "optional": true
+    }
+  }
+}

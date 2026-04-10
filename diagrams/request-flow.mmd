@@ -1,0 +1,34 @@
+graph TD
+    subgraph NL ["💬 Natural Language"]
+        UserPrompt["Find all TODOs"]
+    end
+
+    subgraph Agent ["🔧 Agent Interface"]
+        ToolCall["createPostgresVfsTool()"]
+        BashExec["executeCommand()"]
+    end
+
+    subgraph Code ["⚙️ Code"]
+        Interpreter["just-bash"]
+        FS_Impl["PostgresFs"]
+        Search_Fn["hybridSearch()"]
+        DB_Client["DbClient"]
+    end
+
+    subgraph DB ["🗄️ Persistence"]
+        Table[("vfs_files")]
+    end
+
+    UserPrompt --> ToolCall
+    ToolCall --> BashExec
+    BashExec --> Interpreter
+    Interpreter -- "standard ops" --> FS_Impl
+    Interpreter -- "custom cmd" --> Search_Fn
+    FS_Impl --> DB_Client
+    Search_Fn --> DB_Client
+    DB_Client --> Table
+
+    style NL fill:#f0f4ff,stroke:#4f6df5,stroke-width:1px
+    style Agent fill:#e8f4fd,stroke:#3a9ad9,stroke-width:1px
+    style Code fill:#fff8e6,stroke:#d4a843,stroke-width:1px
+    style DB fill:#e6f3e6,stroke:#2d8a4e,stroke-width:1px

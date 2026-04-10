@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>postgres-vfs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#fff; --bg2:#f8f9fb; --bg3:#f0f2f5; --bg-hover:#eef1f5; --bg-code:#f6f8fa;
+  --border:#e2e5ea; --border-light:#eef0f4;
+  --text:#1a1d21; --text2:#4e5968; --text3:#8b95a2;
+  --accent:#1a73e8; --accent-bg:#e8f0fe; --accent-light:#f0f6ff;
+  --green:#16a34a; --green-bg:#dcfce7;
+  --red:#dc2626; --red-bg:#fee2e2;
+  --purple:#7c3aed; --purple-bg:#f3e8ff;
+  --orange:#ea580c; --orange-bg:#fff7ed;
+  --radius:8px; --radius-sm:5px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.03);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.1);
+  --font:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono','SF Mono',Consolas,monospace;
+  --transition:120ms ease;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg2);color:var(--text);display:flex;flex-direction:column;height:100vh;overflow:hidden;font-size:13px;-webkit-font-smoothing:antialiased}
+
+/* === HEADER === */
+.header{display:flex;align-items:center;gap:16px;padding:0 20px;height:48px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.logo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.3px;white-space:nowrap}
+.logo svg{width:20px;height:20px;color:var(--accent)}
+.header select{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 28px 5px 10px;font-size:12px;font-weight:500;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%234e5968'%3E%3Cpath d='M5 7L1 3h8z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;transition:border-color var(--transition)}
+.header select:hover{border-color:var(--accent)} .header select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.search-box{flex:1;max-width:360px;position:relative}
+.search-box svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text3);pointer-events:none}
+.search-box input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px 6px 32px;font-size:12px;transition:all var(--transition)}
+.search-box input:focus{outline:none;border-color:var(--accent);background:var(--bg);box-shadow:0 0 0 3px var(--accent-bg)}
+.search-box input::placeholder{color:var(--text3)}
+.header-spacer{flex:1}
+
+/* === MAIN === */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* === SIDEBAR === */
+.sidebar{width:280px;min-width:220px;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.sidebar-top{display:flex;align-items:center;gap:6px;padding:0 12px;height:38px;border-bottom:1px solid var(--border-light);flex-shrink:0}
+.sidebar-label{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text3);letter-spacing:.6px;margin-right:auto}
+.sb-btn{background:none;border:none;border-radius:var(--radius-sm);color:var(--text3);cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;transition:all var(--transition)}
+.sb-btn:hover{background:var(--bg3);color:var(--text)}
+.sb-btn.danger:hover{background:var(--red-bg);color:var(--red)}
+.sb-btn svg{width:15px;height:15px}
+.new-dropdown-wrap{position:relative}
+.new-dropdown{display:none;position:absolute;top:100%;right:0;margin-top:4px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);min-width:140px;z-index:50;padding:4px}
+.new-dropdown.open{display:block}
+.new-dropdown-item{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12px;color:var(--text2);border-radius:var(--radius-sm);cursor:pointer;transition:all var(--transition)}
+.new-dropdown-item:hover{background:var(--bg-hover);color:var(--text)}
+.dropdown-divider{border-top:1px solid var(--border-light);margin:4px 0}
+.btn-full{margin-top:6px;width:100%;justify-content:center}
+.tree{flex:1;overflow-y:auto;padding:4px 0}
+.tree-item{display:flex;align-items:center;padding:3px 0 3px 0;cursor:pointer;user-select:none;white-space:nowrap;font-size:13px;color:var(--text2);border-left:2px solid transparent;transition:background var(--transition)}
+.tree-item:hover{background:var(--bg-hover)}
+.tree-item.selected{background:var(--accent-light);color:var(--accent);border-left-color:var(--accent);font-weight:500}
+.t-toggle{width:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text3);cursor:pointer}
+.t-toggle:hover{color:var(--text)}
+.t-icon{width:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.t-icon svg{width:15px;height:15px}
+.t-name{margin-left:4px;overflow:hidden;text-overflow:ellipsis}
+.t-badge{margin-left:auto;padding-right:12px;font-size:10px;color:var(--text3);font-family:var(--mono)}
+.tree-item.dragging{opacity:.4}
+.tree-item.drag-over{background:var(--accent-bg);border-left-color:var(--accent);outline:1px dashed var(--accent);outline-offset:-1px}
+
+/* === CONTENT === */
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);min-width:0}
+.file-header{display:flex;align-items:center;gap:10px;padding:0 20px;height:40px;border-bottom:1px solid var(--border-light);flex-shrink:0}
+.breadcrumb{font-size:12px;color:var(--text3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono)}
+.bc-seg{cursor:pointer;transition:color var(--transition)} .bc-seg:hover{color:var(--accent)}
+.bc-seg.current{color:var(--text);font-weight:500}
+.bc-sep{margin:0 3px;color:var(--border);user-select:none}
+.file-header-actions{display:flex;gap:5px;flex-shrink:0}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--text2);transition:all var(--transition);font-family:var(--font)}
+.btn:hover{background:var(--bg3);color:var(--text);border-color:var(--text3)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)} .btn-primary:hover{background:#1557b0}
+.btn-success{background:var(--green);color:#fff;border-color:var(--green)} .btn-success:hover{background:#15803d}
+.btn-danger{color:var(--red)} .btn-danger:hover{background:var(--red-bg);border-color:var(--red)}
+.view-toggle{display:flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-right:4px}
+.vt-btn{padding:3px 10px;font-size:11px;font-weight:500;cursor:pointer;border:none;background:var(--bg);color:var(--text3);font-family:var(--font);transition:all var(--transition)}
+.vt-btn:hover{color:var(--text)}
+.vt-btn.active{background:var(--accent);color:#fff}
+.md-preview{padding:20px 28px;font-size:14px;line-height:1.7;color:var(--text);max-width:720px}
+.md-preview h1{font-size:24px;font-weight:700;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border-light)}
+.md-preview h2{font-size:20px;font-weight:600;margin:18px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border-light)}
+.md-preview h3{font-size:16px;font-weight:600;margin:14px 0 4px}
+.md-preview h4,.md-preview h5,.md-preview h6{font-size:14px;font-weight:600;margin:12px 0 4px}
+.md-preview p{margin:0 0 10px}
+.md-preview ul,.md-preview ol{margin:0 0 10px;padding-left:24px}
+.md-preview li{margin-bottom:3px}
+.md-preview code{background:var(--bg-code);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:12px}
+.md-preview pre{background:var(--bg-code);padding:12px 16px;border-radius:var(--radius);margin:0 0 12px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.5}
+.md-preview pre code{background:none;padding:0}
+.md-preview blockquote{border-left:3px solid var(--accent);padding:4px 16px;margin:0 0 10px;color:var(--text2);background:var(--accent-bg);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.md-preview a{color:var(--accent);text-decoration:none} .md-preview a:hover{text-decoration:underline}
+.md-preview hr{border:none;border-top:1px solid var(--border);margin:16px 0}
+.md-preview strong{font-weight:600} .md-preview em{font-style:italic}
+.md-preview img{max-width:100%}
+.md-preview .task-item{list-style:none;margin-left:-20px}
+.md-preview .task-cb{margin-right:6px}
+.file-body{display:flex;flex:1;overflow:hidden}
+.code-area{flex:1;overflow:auto}
+.code-view{display:flex;font-family:var(--mono);font-size:13px;line-height:1.65;min-height:100%}
+.line-nums{text-align:right;padding:14px 10px 14px 16px;color:var(--text3);user-select:none;border-right:1px solid var(--border-light);min-width:48px;flex-shrink:0;font-size:12px;opacity:.5}
+.line-nums div{line-height:1.65}
+.code-lines{padding:14px 20px;white-space:pre-wrap;word-wrap:break-word;flex:1;tab-size:2}
+.code-area textarea{width:100%;height:100%;background:var(--bg);color:var(--text);border:none;padding:14px 20px;font-family:var(--mono);font-size:13px;line-height:1.65;resize:none;tab-size:2}
+.code-area textarea:focus{outline:none}
+
+/* === DETAIL PANEL (right sidebar) === */
+.detail{width:280px;min-width:220px;background:var(--bg);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.detail.hidden{display:none}
+.detail-section{padding:14px 16px;border-bottom:1px solid var(--border-light)}
+.detail-section h4{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:10px}
+.detail-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px}
+.detail-row .label{color:var(--text3)}
+.detail-row .value{color:var(--text);font-family:var(--mono);font-size:11px;text-align:right;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag-list{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.tag-pill{background:var(--purple-bg);color:var(--purple);border-radius:10px;padding:2px 9px;font-size:11px;font-weight:500;display:inline-flex;align-items:center;gap:4px}
+.tag-pill .tag-x{cursor:pointer;font-size:13px;line-height:1;opacity:.6} .tag-pill .tag-x:hover{opacity:1}
+.tag-input{display:flex;gap:4px}
+.tag-input input{flex:1;border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 8px;font-size:11px;font-family:var(--font)}
+.tag-input input:focus{outline:none;border-color:var(--accent)}
+.summary-input{width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px;font-size:12px;font-family:var(--font);resize:vertical;min-height:56px;color:var(--text)}
+.summary-input:focus{outline:none;border-color:var(--accent)}
+.detail-actions{display:flex;flex-direction:column;gap:6px}
+.detail-actions .btn{width:100%;justify-content:center}
+
+/* === STATUS BAR === */
+.status-bar{display:flex;align-items:center;gap:16px;padding:0 16px;height:26px;background:var(--bg);border-top:1px solid var(--border);font-size:11px;color:var(--text3);flex-shrink:0}
+
+/* === EMPTY STATE === */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text3);gap:10px}
+.empty-state svg{width:40px;height:40px;opacity:.25}
+.empty-state p{font-size:13px}
+
+/* === SEARCH RESULTS === */
+.search-results{flex:1;overflow-y:auto;padding:16px 20px}
+.search-header{font-size:12px;color:var(--text2);margin-bottom:10px;font-weight:500}
+.sr-card{padding:10px 14px;border-radius:var(--radius);cursor:pointer;margin-bottom:6px;border:1px solid var(--border-light);background:var(--bg);transition:all var(--transition)}
+.sr-card:hover{border-color:var(--accent);box-shadow:var(--shadow-sm)}
+.sr-path{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:500}
+.sr-score{font-size:10px;color:var(--text3);float:right;background:var(--bg3);padding:1px 7px;border-radius:8px;font-family:var(--mono)}
+.sr-summary{font-size:11px;color:var(--text2);margin-top:3px}
+
+/* === MODAL === */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.25);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:420px;box-shadow:var(--shadow-lg)}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.modal-desc{font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.5;white-space:pre-line}
+.modal-desc:empty{display:none}
+.modal input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-size:13px;font-family:var(--mono);margin-bottom:14px}
+.modal input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg);background:var(--bg)}
+.modal input.hidden{display:none}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar{width:6px;height:6px} ::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px} ::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+
+/* === MOBILE TOGGLE BUTTONS === */
+.mobile-btn{display:none;align-items:center;justify-content:center;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);cursor:pointer;padding:4px 8px;transition:all var(--transition)}
+.mobile-btn:hover{background:var(--bg3);color:var(--text)}
+.mobile-btn svg{width:18px;height:18px}
+.mobile-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:45}
+.mobile-backdrop.open{display:block}
+
+/* === RESPONSIVE: MOBILE (<768px) === */
+@media(max-width:768px){
+  .header{flex-wrap:wrap;height:auto;padding:8px 12px;gap:8px}
+  .header-spacer{display:none}
+  .search-box{max-width:100%;order:10;flex-basis:100%}
+  .mobile-btn{display:flex}
+  .main{position:relative}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:50;width:280px;transform:translateX(-100%);transition:transform 200ms ease;box-shadow:var(--shadow-lg)}
+  .sidebar.open{transform:translateX(0)}
+  .detail{position:fixed;right:0;top:0;bottom:0;z-index:50;width:280px;transform:translateX(100%);transition:transform 200ms ease;box-shadow:var(--shadow-lg)}
+  .detail.open{transform:translateX(0)}
+  .detail.hidden{display:flex!important;transform:translateX(100%)}
+  .detail.hidden.open{transform:translateX(0)}
+  .content{width:100%}
+  .modal-overlay{align-items:center;padding:16px}
+  .modal{min-width:0;width:100%;max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);overflow-y:auto}
+  .file-header{flex-wrap:wrap;height:auto;padding:8px 12px}
+  .breadcrumb{flex-basis:100%;font-size:11px}
+  .status-bar{font-size:10px;gap:10px;padding:0 10px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <button class="mobile-btn" id="sidebarToggle" title="Toggle explorer" aria-label="Toggle file explorer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    postgres-vfs
+  </div>
+  <select id="tenantSelect"><option value="">Select tenant...</option></select>
+  <div class="header-spacer"></div>
+  <button class="mobile-btn" id="detailToggle" title="Toggle details" aria-label="Toggle file details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="search" id="searchInput" placeholder="Search files..." aria-label="Search files" />
+  </div>
+</div>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+
+<!-- MAIN 3-COLUMN LAYOUT -->
+<div class="main">
+
+  <!-- LEFT: File Tree -->
+  <div class="sidebar">
+    <div class="sidebar-top">
+      <span class="sidebar-label">Explorer</span>
+      <div class="new-dropdown-wrap">
+        <button class="sb-btn" id="newBtn" title="Create new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="new-dropdown" id="newDropdown" role="menu">
+          <div class="new-dropdown-item" onclick="newFile();hideNewDropdown()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            New File
+          </div>
+          <div class="new-dropdown-item" onclick="newFolder();hideNewDropdown()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            New Folder
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="new-dropdown-item" onclick="triggerUpload();hideNewDropdown()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Files
+          </div>
+        </div>
+        <input type="file" id="fileUploadInput" multiple style="display:none" />
+      </div>
+    </div>
+    <div class="tree" id="tree"></div>
+  </div>
+
+  <!-- CENTER: File Content -->
+  <div class="content" id="contentArea">
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+      <p>Select a tenant and file to begin</p>
+    </div>
+  </div>
+
+  <!-- RIGHT: Detail Panel -->
+  <div class="detail hidden" id="detailPanel">
+    <div class="detail-section">
+      <h4 id="d-type-label">File Info</h4>
+      <div class="detail-row"><span class="label">Path</span><span class="value" id="d-path">—</span></div>
+      <div class="detail-row"><span class="label">Size</span><span class="value" id="d-size">—</span></div>
+      <div class="detail-row"><span class="label">Modified</span><span class="value" id="d-mtime">—</span></div>
+      <div class="detail-row" id="d-children-row" style="display:none"><span class="label">Contents</span><span class="value" id="d-children">—</span></div>
+    </div>
+    <div class="detail-section" id="d-tags-section">
+      <h4>Tags</h4>
+      <div class="tag-list" id="d-tags"></div>
+      <div class="tag-input">
+        <input type="text" id="tagInput" placeholder="Add tag..." />
+        <button class="btn" onclick="addTagUI()">+</button>
+      </div>
+    </div>
+    <div class="detail-section" id="d-summary-section">
+      <h4>Summary</h4>
+      <textarea class="summary-input" id="d-summary" placeholder="Add a summary..."></textarea>
+      <button class="btn btn-full" onclick="saveSummary()">Save summary</button>
+    </div>
+    <div class="detail-section">
+      <h4>Actions</h4>
+      <div class="detail-actions">
+        <button class="btn" id="d-copy-btn" onclick="copyContent()">Copy content</button>
+        <button class="btn" onclick="renameSelected()">Rename</button>
+        <button class="btn btn-danger" onclick="deleteSelected()">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <span id="statusFiles">—</span>
+  <span id="statusSize">—</span>
+  <span id="statusTenant">No tenant</span>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" style="display:none">
+  <div class="modal">
+    <h3 id="modalTitle">Title</h3>
+    <p id="modalDesc" class="modal-desc"></p>
+    <input id="modalInput" placeholder="" />
+    <div class="modal-actions">
+      <button class="btn" id="modalCancel">Cancel</button>
+      <button class="btn btn-primary" id="modalOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let tenant='',selectedPath=null,editing=false,expandedDirs=new Set(['/']),currentFileData=null;
+
+const $=id=>document.getElementById(id);
+const tenantSelect=$('tenantSelect');
+const searchInput=$('searchInput');
+
+tenantSelect.addEventListener('change',()=>{tenant=tenantSelect.value;selectedPath=null;expandedDirs=new Set(['/']);if(tenant){loadTree();loadStats()}else{$('tree').innerHTML='';$('statusFiles').textContent='—';$('statusSize').textContent='—';$('statusTenant').textContent='No tenant'}showEmpty();saveState()});
+searchInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSearch(searchInput.value)});
+
+async function api(path,opts){const sep=path.includes('?')?'&':'?';const r=await fetch('/api'+path+sep+'tenant='+encodeURIComponent(tenant),opts);return r.json()}
+
+async function loadTenants(){const t=await api('/tenants');tenantSelect.innerHTML='<option value="">Select tenant...<\/option>'+t.map(x=>'<option value="'+x+'">'+x+'<\/option>').join('')}
+
+async function loadStats(){const s=await api('/stats');$('statusFiles').textContent=s.files+' files';$('statusSize').textContent=fmtSize(s.totalSize);$('statusTenant').textContent='Tenant: '+tenant}
+
+// --- Icons ---
+const IC_FOLDER='<svg viewBox="0 0 24 24" fill="#4f9cf8" stroke="none" width="15" height="15"><path d="M2 6a2 2 0 0 1 2-2h4.5l2 2H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6z"/><\/svg>';
+const IC_FOLDER_OPEN='<svg viewBox="0 0 24 24" fill="#4f9cf8" stroke="none" width="15" height="15"><path d="M2 6a2 2 0 0 1 2-2h4.5l2 2H20a2 2 0 0 1 2 2v1H6.5a2 2 0 0 0-1.9 1.4L2 18V6z"/><path d="M4.5 11h17l-2.5 9H2l2.5-9z" opacity=".7"/><\/svg>';
+const IC_FILE='<svg viewBox="0 0 24 24" fill="none" stroke="#8b95a2" stroke-width="1.5" width="15" height="15"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><\/svg>';
+function extIcon(n){const e=n.split('.').pop();if('ts tsx js jsx'.includes(e))return '<svg viewBox="0 0 24 24" width="15" height="15"><rect x="2" y="2" width="20" height="20" rx="3" fill="#3178c6"/><text x="12" y="16" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold" font-family="Arial">TS<\/text><\/svg>';if(e==='md'||e==='mdx')return '<svg viewBox="0 0 24 24" width="15" height="15"><rect x="2" y="2" width="20" height="20" rx="3" fill="#083fa1"/><text x="12" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold" font-family="Arial">MD<\/text><\/svg>';if(e==='json')return '<svg viewBox="0 0 24 24" width="15" height="15"><rect x="2" y="2" width="20" height="20" rx="3" fill="#e5a00d"/><text x="12" y="16" text-anchor="middle" fill="#fff" font-size="7" font-weight="bold" font-family="Arial">{}<\/text><\/svg>';if(e==='sql')return '<svg viewBox="0 0 24 24" width="15" height="15"><rect x="2" y="2" width="20" height="20" rx="3" fill="#e97d13"/><text x="12" y="16" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold" font-family="Arial">SQ<\/text><\/svg>';return IC_FILE}
+function fIcon(name,isDir,isOpen){return isDir?(isOpen?IC_FOLDER_OPEN:IC_FOLDER):extIcon(name)}
+
+// --- Tree ---
+async function loadTree(){if(!tenant)return;const tree=$('tree');tree.innerHTML='';await renderDir('/',tree,0);
+  // Root drop target
+  tree.ondragover=ev=>{ev.preventDefault();ev.dataTransfer.dropEffect='move'};
+  tree.onclick=ev=>{if(ev.target===tree){selectedPath=null;showEmpty();loadTree();saveState()}};
+  tree.ondrop=ev=>{ev.preventDefault();if(ev.target===tree||ev.target.closest('.tree-item')===null){handleDrop(ev.dataTransfer.getData('text/plain'),'/')}}
+}
+
+async function renderDir(path,container,depth){
+  if(!expandedDirs.has(path))return;
+  const entries=await api('/files?path='+encodeURIComponent(path));
+  const sorted=entries.sort((a,b)=>{if(a.isDir!==b.isDir)return a.isDir?-1:1;return a.name.localeCompare(b.name)});
+  if(depth===0)container.innerHTML='';
+  for(const e of sorted){
+    const item=document.createElement('div');
+    item.className='tree-item'+(e.path===selectedPath?' selected':'');
+    item.style.paddingLeft=(14+depth*18)+'px';
+    const isOpen=expandedDirs.has(e.path);
+    let toggleHtml='<span class="t-toggle">';
+    if(e.isDir)toggleHtml+=isOpen?'<svg viewBox="0 0 16 16" width="10" height="10" fill="currentColor"><path d="M4 6l4 4 4-4"/><\/svg>':'<svg viewBox="0 0 16 16" width="10" height="10" fill="currentColor"><path d="M6 4l4 4-4 4"/><\/svg>';
+    toggleHtml+='<\/span>';
+    item.innerHTML=toggleHtml+'<span class="t-icon">'+fIcon(e.name,e.isDir,isOpen)+'<\/span><span class="t-name">'+esc(e.name)+'<\/span>'+((!e.isDir&&e.size>0)?'<span class="t-badge">'+fmtSize(e.size)+'<\/span>':'');
+
+    // Drag and drop
+    item.dataset.path=e.path;
+    item.dataset.dir=e.isDir?'1':'0';
+    item.draggable=true;
+    item.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/plain',e.path);ev.dataTransfer.effectAllowed='move';item.classList.add('dragging')});
+    item.addEventListener('dragend',()=>{item.classList.remove('dragging');document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'))});
+    // Drop target: directories accept into themselves, files accept into their parent
+    item.addEventListener('dragover',ev=>{ev.preventDefault();ev.dataTransfer.dropEffect='move';item.classList.add('drag-over')});
+    item.addEventListener('dragleave',ev=>{if(!item.contains(ev.relatedTarget))item.classList.remove('drag-over')});
+    item.addEventListener('drop',ev=>{ev.preventDefault();item.classList.remove('drag-over');const destDir=e.isDir?e.path:e.path.substring(0,e.path.lastIndexOf('/'))||'/';handleDrop(ev.dataTransfer.getData('text/plain'),destDir)});
+
+    const toggle=item.querySelector('.t-toggle');
+    if(e.isDir){toggle.onclick=ev=>{ev.stopPropagation();if(expandedDirs.has(e.path))expandedDirs.delete(e.path);else expandedDirs.add(e.path);loadTree();saveState()}}
+
+    item.onclick=()=>{const wasSelected=selectedPath===e.path;selectedPath=e.path;document.querySelectorAll('.tree-item.selected').forEach(el=>el.classList.remove('selected'));item.classList.add('selected');if(e.isDir){if(wasSelected){if(expandedDirs.has(e.path))expandedDirs.delete(e.path);else expandedDirs.add(e.path)}else{expandedDirs.add(e.path)}showEmptyContent();showDirDetail(e.path);loadTree()}else{loadFile(e.path)}saveState()};
+    container.appendChild(item);
+    if(e.isDir&&isOpen){const ch=document.createElement('div');container.appendChild(ch);await renderDir(e.path,ch,depth+1)}
+  }
+}
+
+// --- File viewer ---
+async function loadFile(path){
+  editing=false;currentFileData=await api('/file?path='+encodeURIComponent(path));
+  const d=currentFileData,area=$('contentArea');
+  const parts=path.split('/').filter(Boolean);
+  let bc='<span class="bc-seg" data-p="/">~<\/span>';
+  for(let i=0;i<parts.length;i++){const p='/'+parts.slice(0,i+1).join('/');const cls=i===parts.length-1?' current':'';bc+='<span class="bc-sep">\/<\/span><span class="bc-seg'+cls+'" data-p="'+esc(p)+'">'+esc(parts[i])+'<\/span>'}
+
+  const isMd=/\.(md|mdx|markdown)$/i.test(path);
+  const lines=d.content.split('\n'),nums=lines.map((_,i)=>'<div>'+(i+1)+'<\/div>').join(''),code=lines.map(l=>esc(l)).join('\n');
+  const mdToggle=isMd?'<div class="view-toggle" id="viewToggle"><button class="vt-btn active" data-view="raw">Raw<\/button><button class="vt-btn" data-view="preview">Preview<\/button><\/div>':'';
+  area.innerHTML='<div class="file-header"><div class="breadcrumb">'+bc+'<\/div><div class="file-header-actions">'+mdToggle+'<button class="btn" id="editBtn" onclick="toggleEdit()">Edit<\/button><button class="btn btn-success" id="saveBtn" style="display:none" onclick="saveFile()">Save<\/button><\/div><\/div><div class="file-body"><div class="code-area" id="codeArea"><div class="code-view"><div class="line-nums">'+nums+'<\/div><pre class="code-lines">'+code+'<\/pre><\/div><\/div><\/div>';
+  if(isMd){const vt=$('viewToggle');if(vt)vt.querySelectorAll('.vt-btn').forEach(btn=>btn.onclick=()=>{vt.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const ca=$('codeArea');if(btn.dataset.view==='preview'){ca.innerHTML='<div class="md-preview">'+renderMarkdown(d.content)+'<\/div>'}else{ca.innerHTML='<div class="code-view"><div class="line-nums">'+nums+'<\/div><pre class="code-lines">'+code+'<\/pre><\/div>'}})}
+  area.dataset.path=path;area.dataset.content=d.content;selectedPath=path;saveState();
+  area.querySelectorAll('.bc-seg').forEach(el=>el.onclick=()=>{const p=el.dataset.p;selectedPath=p;expandedDirs.add(p);showEmptyContent();showDirDetail(p);loadTree()});
+
+  // Detail panel — reset folder-specific hiding, show file sections
+  const dp=$('detailPanel');dp.classList.remove('hidden');
+  $('d-type-label').textContent='File Info';
+  $('d-children-row').style.display='none';
+  $('d-tags-section').style.display='';
+  $('d-summary-section').style.display='';
+  $('d-copy-btn').style.display='';
+  $('d-path').textContent=d.path;$('d-path').title=d.path;
+  $('d-size').textContent=fmtSize(d.size);
+  $('d-mtime').textContent=timeAgo(d.mtime);$('d-mtime').title=new Date(d.mtime).toLocaleString();
+  renderTags(d.tags);
+  $('d-summary').value=d.summary||'';
+  if(isMobile())closeMobilePanels();
+}
+
+function renderTags(tags){
+  $('d-tags').innerHTML=tags.map(t=>'<span class="tag-pill">'+esc(t)+' <span class="tag-x" data-tag="'+esc(t)+'">x<\/span><\/span>').join('');
+  $('d-tags').querySelectorAll('.tag-x').forEach(el=>el.onclick=()=>removeTagUI(el.dataset.tag))}
+
+async function addTagUI(){const inp=$('tagInput'),tag=inp.value.trim();if(!tag||!selectedPath)return;await api('/tag',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:selectedPath,tag})});inp.value='';const d=await api('/file?path='+encodeURIComponent(selectedPath));renderTags(d.tags)}
+
+async function removeTagUI(tag){if(!selectedPath)return;await api('/tag',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:selectedPath,tag,action:'remove'})});const d=await api('/file?path='+encodeURIComponent(selectedPath));renderTags(d.tags)}
+
+async function saveSummary(){if(!selectedPath)return;const summary=$('d-summary').value;await fetch('/api/file?tenant='+encodeURIComponent(tenant),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:selectedPath,content:currentFileData.content,summary})})}
+
+function copyContent(){if(currentFileData)navigator.clipboard.writeText(currentFileData.content)}
+
+function toggleEdit(){
+  const area=$('contentArea');if(!area.dataset.path)return;editing=!editing;
+  if(editing){$('editBtn').textContent='Cancel';$('saveBtn').style.display='';const ca=area.querySelector('.code-area');ca.innerHTML='<textarea id="editor">'+esc(area.dataset.content)+'<\/textarea>';$('editor').focus();$('editor').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='s'){e.preventDefault();saveFile()}})}
+  else{$('editBtn').textContent='Edit';$('saveBtn').style.display='none';loadFile(area.dataset.path)}
+}
+
+async function saveFile(){
+  const editor=$('editor'),area=$('contentArea');if(!editor||!area.dataset.path)return;
+  await api('/file',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:area.dataset.path,content:editor.value})});
+  editing=false;await loadFile(area.dataset.path);await loadTree();await loadStats();
+}
+
+// --- Modal system (Promise-based) ---
+let _modalResolve=null;
+function _openModal(title,desc,inputMode,okLabel,destructive){
+  return new Promise(resolve=>{
+    _modalResolve=resolve;
+    $('modalTitle').textContent=title;
+    $('modalDesc').textContent=desc||'';
+    const inp=$('modalInput');
+    const cancelBtn=$('modalCancel');
+    const okBtn=$('modalOk');
+    if(inputMode){inp.classList.remove('hidden');inp.value='';inp.placeholder=inputMode;setTimeout(()=>inp.focus(),50)}
+    else{inp.classList.add('hidden')}
+    cancelBtn.style.display=desc!==null?'':'none';
+    okBtn.textContent=okLabel||'OK';
+    okBtn.className='btn '+(destructive?'btn-danger':'btn-primary');
+    $('modal').style.display='flex';
+  })
+}
+function _closeModal(value){$('modal').style.display='none';if(_modalResolve){_modalResolve(value);_modalResolve=null}}
+$('modalOk').onclick=()=>{const inp=$('modalInput');if(!inp.classList.contains('hidden')){const v=inp.value.trim();if(v)_closeModal(v)}else{_closeModal(true)}};
+$('modalCancel').onclick=()=>_closeModal($('modalInput').classList.contains('hidden')?false:null);
+$('modalInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('modalOk').click();if(e.key==='Escape')$('modalCancel').click()});
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))$('modalCancel').click()});
+
+function showPrompt(title,placeholder){return _openModal(title,'',placeholder,'OK',false)}
+function showConfirm(title,desc,destructive){return _openModal(title,desc,null,destructive?'Delete':'OK',destructive)}
+function showAlert(title){return _openModal(title,null,null,'OK',false)}
+
+// --- CRUD ---
+// --- Upload ---
+function getUploadBase(){
+  if(!selectedPath||selectedPath==='/')return '/';
+  // If selected item is a directory, upload into it; if file, upload into its parent
+  const sel=document.querySelector('.tree-item.selected');
+  if(sel&&sel.dataset.dir==='1')return selectedPath.endsWith('/')?selectedPath:selectedPath+'/';
+  return selectedPath.replace(/\/[^\/]*$/,'/')||'/';
+}
+function triggerUpload(){if(!tenant)return showAlert('Select a tenant first');$('fileUploadInput').click()}
+$('fileUploadInput').addEventListener('change',async ev=>{
+  const files=ev.target.files;if(!files||!files.length)return;
+  const base=getUploadBase();
+  let uploaded=0,errors=[];
+  for(const file of files){
+    try{
+      const reader=new FileReader();
+      const text=await new Promise((resolve,reject)=>{reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Failed to read '+file.name));;reader.readAsText(file)});
+      const path=base+file.name;
+      const res=await api('/file',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,content:text})});
+      if(res.error)throw new Error(res.error);
+      uploaded++;
+    }catch(e){errors.push(file.name+': '+(e.message||'unknown error'))};
+  }
+  ev.target.value='';
+  await loadTree();await loadStats();
+  if(errors.length)await showAlert('Uploaded '+uploaded+' file'+(uploaded>1?'s':'')+'\nFailed: '+errors.join(', '));
+  else if(uploaded)await showAlert('Uploaded '+uploaded+' file'+(uploaded>1?'s':'')+' to '+base);
+});
+
+async function newFile(){if(!tenant)return showAlert('Select a tenant first');const base=selectedPath&&selectedPath!=='/'?selectedPath.replace(/\/[^\/]*$/,'/'):'/';const p=await showPrompt('New File',base+'filename.txt');if(!p)return;await api('/file',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p,content:''})});expandParents(p);await loadTree();await loadFile(p);selectedPath=p;await loadStats();saveState()}
+async function newFolder(){if(!tenant)return showAlert('Select a tenant first');const base=selectedPath&&selectedPath!=='/'?selectedPath.replace(/\/[^\/]*$/,'/'):'/';const p=await showPrompt('New Folder',base+'folder-name');if(!p)return;await api('/mkdir',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})});expandParents(p);expandedDirs.add(p);await loadTree();await loadStats();saveState()}
+async function renameSelected(){if(!selectedPath||selectedPath==='/')return;const np=await showPrompt('Rename',selectedPath);if(!np)return;await api('/rename',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({oldPath:selectedPath,newPath:np})});selectedPath=np;await loadTree();await loadFile(np);saveState()}
+async function deleteSelected(){if(!selectedPath||selectedPath==='/')return;const ok=await showConfirm('Delete?','Are you sure you want to delete '+selectedPath+'?',true);if(!ok)return;await api('/file?path='+encodeURIComponent(selectedPath),{method:'DELETE'});selectedPath=null;showEmpty();$('detailPanel').classList.add('hidden');await loadTree();await loadStats();saveState()}
+
+// --- Search ---
+async function doSearch(q){if(!q||!tenant)return;const results=await api('/search?q='+encodeURIComponent(q));const area=$('contentArea');$('detailPanel').classList.add('hidden');if(!results.length){area.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><\/svg><p>No results for "'+esc(q)+'"<\/p><\/div>';return}
+area.innerHTML='<div style="padding:16px 20px"><div class="search-header">'+results.length+' results for "'+esc(q)+'"<\/div>'+results.map(r=>'<div class="sr-card" data-path="'+esc(r.path)+'">'+'<span class="sr-score">'+r.score.toFixed(3)+'<\/span><div class="sr-path">'+esc(r.path)+'<\/div>'+(r.summary?'<div class="sr-summary">'+esc(r.summary)+'<\/div>':'')+'<\/div>').join('')+'<\/div>';
+area.querySelectorAll('.sr-card').forEach(el=>el.onclick=()=>loadFile(el.dataset.path))}
+
+function showEmptyContent(){$('contentArea').innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/><\/svg><p>Select a file to view<\/p><\/div>'}
+function showEmpty(){showEmptyContent();$('detailPanel').classList.add('hidden')}
+
+function expandParents(p){const parts=p.split('/').filter(Boolean);for(let i=1;i<parts.length;i++)expandedDirs.add('/'+parts.slice(0,i).join('/'))}
+
+function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB'}
+function timeAgo(iso){const s=Math.floor((Date.now()-new Date(iso))/1000);if(s<60)return s+'s ago';const m=Math.floor(s/60);if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';const d=Math.floor(h/24);return d+'d ago'}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/\u003c/g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// --- Markdown renderer (lightweight, no deps) ---
+function renderMarkdown(src){
+  let html='';
+  const lines=src.split('\n');
+  let i=0,inCode=false,codeLang='',codeBlock='',inList='',listHtml='';
+  function flushList(){if(inList){html+=(inList==='ul'?'<ul>':'<ol>')+listHtml+(inList==='ul'?'<\/ul>':'<\/ol>');inList='';listHtml=''}}
+  function inline(t){
+    return t
+      .replace(/`([^`]+)`/g,'<code>$1<\/code>')
+      .replace(/\*\*([^*]+)\*\*/g,'<strong>$1<\/strong>')
+      .replace(/__([^_]+)__/g,'<strong>$1<\/strong>')
+      .replace(/\*([^*]+)\*/g,'<em>$1<\/em>')
+      .replace(/_([^_]+)_/g,'<em>$1<\/em>')
+      .replace(/~~([^~]+)~~/g,'<del>$1<\/del>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2">$1<\/a>')
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img alt="$1" src="$2">')
+  }
+  while(i<lines.length){
+    const line=lines[i];
+    if(inCode){if(line.startsWith('```')){html+='<pre><code>'+esc(codeBlock)+'<\/code><\/pre>';inCode=false;codeBlock=''}else{codeBlock+=(codeBlock?'\n':'')+line}i++;continue}
+    if(line.startsWith('```')){flushList();inCode=true;codeLang=line.slice(3).trim();codeBlock='';i++;continue}
+    if(line.startsWith('######')){flushList();html+='<h6>'+inline(esc(line.slice(7)))+'<\/h6>'}
+    else if(line.startsWith('#####')){flushList();html+='<h5>'+inline(esc(line.slice(6)))+'<\/h5>'}
+    else if(line.startsWith('####')){flushList();html+='<h4>'+inline(esc(line.slice(5)))+'<\/h4>'}
+    else if(line.startsWith('###')){flushList();html+='<h3>'+inline(esc(line.slice(4)))+'<\/h3>'}
+    else if(line.startsWith('##')){flushList();html+='<h2>'+inline(esc(line.slice(3)))+'<\/h2>'}
+    else if(line.startsWith('#')){flushList();html+='<h1>'+inline(esc(line.slice(2)))+'<\/h1>'}
+    else if(line.startsWith('>')){flushList();html+='<blockquote>'+inline(esc(line.slice(1).trim()))+'<\/blockquote>'}
+    else if(line.startsWith('---')||line.startsWith('***')){flushList();html+='<hr>'}
+    else if(/^- \[[ x]\] /.test(line)){
+      if(inList!=='ul'){flushList();inList='ul'}
+      const checked=line[3]==='x';
+      listHtml+='<li class="task-item"><input type="checkbox" class="task-cb" disabled'+(checked?' checked':'')+'>'+inline(esc(line.slice(5).trim()))+'<\/li>'
+    }
+    else if(line.startsWith('- ')||line.startsWith('* ')){
+      if(inList!=='ul'){flushList();inList='ul'}
+      listHtml+='<li>'+inline(esc(line.slice(2)))+'<\/li>'
+    }
+    else if(/^\d+\.\s/.test(line)){
+      if(inList!=='ol'){flushList();inList='ol'}
+      listHtml+='<li>'+inline(esc(line.replace(/^\d+\.\s/,'')))+'<\/li>'
+    }
+    else if(line.trim()===''){flushList();html+=''}
+    else{flushList();html+='<p>'+inline(esc(line))+'<\/p>'}
+    i++
+  }
+  flushList();
+  if(inCode)html+='<pre><code>'+esc(codeBlock)+'<\/code><\/pre>';
+  return html
+}
+
+// --- Drag and drop move ---
+async function handleDrop(srcPath,destDir){
+  if(!srcPath||!destDir||srcPath===destDir)return;
+  const fileName=srcPath.split('/').pop();
+  const newPath=destDir==='/'?'/'+fileName:destDir+'/'+fileName;
+  if(srcPath===newPath)return;
+  if(newPath.startsWith(srcPath+'/'))return; // can't drop into own child
+  if(!await showConfirm('Move file?','From: '+srcPath+'\nTo: '+newPath))return;
+  await api('/rename',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({oldPath:srcPath,newPath:newPath})});
+  expandedDirs.add(destDir);
+  if(selectedPath===srcPath)selectedPath=newPath;
+  await loadTree();await loadStats();saveState();
+}
+
+// --- New dropdown ---
+$('newBtn').onclick=()=>{$('newDropdown').classList.toggle('open')};
+function hideNewDropdown(){$('newDropdown').classList.remove('open')}
+document.addEventListener('click',e=>{if(!e.target.closest('.new-dropdown-wrap'))hideNewDropdown()});
+
+// --- Directory detail ---
+async function showDirDetail(path){
+  const dp=$('detailPanel');dp.classList.remove('hidden');
+  $('d-type-label').textContent='Folder Info';
+  $('d-path').textContent=path;$('d-path').title=path;
+  $('d-size').textContent='—';
+  $('d-mtime').textContent='—';
+  $('d-children-row').style.display='flex';
+  $('d-tags-section').style.display='none';
+  $('d-summary-section').style.display='none';
+  $('d-copy-btn').style.display='none';
+  // Count children
+  try{
+    const entries=await api('/files?path='+encodeURIComponent(path));
+    const files=entries.filter(e=>!e.isDir).length;
+    const dirs=entries.filter(e=>e.isDir).length;
+    $('d-children').textContent=files+' files, '+dirs+' folders';
+  }catch{$('d-children').textContent='—'}
+  if(isMobile())closeMobilePanels();
+}
+
+// --- Mobile panel toggles ---
+const isMobile=()=>window.innerWidth<=768;
+function closeMobilePanels(){document.querySelector('.sidebar').classList.remove('open');$('detailPanel').classList.remove('open');$('mobileBackdrop').classList.remove('open')}
+function openMobileSidebar(){if(!isMobile())return;closeMobilePanels();document.querySelector('.sidebar').classList.add('open');$('mobileBackdrop').classList.add('open')}
+function openMobileDetail(){if(!isMobile())return;closeMobilePanels();$('detailPanel').classList.add('open');$('mobileBackdrop').classList.add('open')}
+$('sidebarToggle').onclick=()=>{const sb=document.querySelector('.sidebar');if(sb.classList.contains('open'))closeMobilePanels();else openMobileSidebar()};
+$('detailToggle').onclick=()=>{const dp=$('detailPanel');if(dp.classList.contains('open'))closeMobilePanels();else openMobileDetail()};
+$('mobileBackdrop').onclick=closeMobilePanels;
+
+// --- State persistence ---
+function saveState(){
+  localStorage.setItem('pgvfs_tenant',tenant);
+  localStorage.setItem('pgvfs_selected',selectedPath||'');
+  localStorage.setItem('pgvfs_expanded',JSON.stringify([...expandedDirs]));
+}
+
+async function init(){
+  await loadTenants();
+  const saved=localStorage.getItem('pgvfs_tenant');
+  if(saved&&tenantSelect.querySelector('option[value="'+saved+'"]')){
+    tenant=saved;tenantSelect.value=saved;
+    try{expandedDirs=new Set(JSON.parse(localStorage.getItem('pgvfs_expanded')||'["/"]'))}catch{expandedDirs=new Set(['/'])}
+    await loadTree();await loadStats();
+    const sp=localStorage.getItem('pgvfs_selected');
+    if(sp){selectedPath=sp;try{await loadFile(sp)}catch{showEmpty()}}
+  }
+}
+init();
+</script>
+</body>
+</html>
