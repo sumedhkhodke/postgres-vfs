@@ -16,6 +16,8 @@ Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash
 
 <p align="center"><img src="diagrams/demo.gif" width="760" alt="Terminal demo: an AI agent queries meeting files via bash-tool, using find and grep to locate deadlines across a Postgres-backed virtual filesystem"></p>
 
+<p align="center"><img src="diagrams/db-rows-filesystem.png" width="760" alt="pgAdmin showing vfs_files table rows: directories and markdown files stored as database rows with tenant isolation"></p>
+
 ---
 
 ## Why
