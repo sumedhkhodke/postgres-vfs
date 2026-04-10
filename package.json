@@ -2,6 +2,7 @@
   "name": "postgres-vfs",
   "version": "0.1.0",
   "description": "Virtual filesystem for AI agents backed by PostgreSQL — ChromaFs-equivalent using just-bash",
+  "license": "Apache-2.0",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
