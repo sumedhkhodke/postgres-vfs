@@ -4,6 +4,7 @@ import { hybridSearch } from "../fs/search.js";
 import { recentFiles, addTag, removeTag } from "../fs/metadata.js";
 import { errorMessage } from "../utils.js";
 import { embedFile, generateEmbedding } from "../fs/embeddings.js";
+import { normalizePath } from "../fs/path-utils.js";
 
 const sql = createClient();
 
@@ -30,6 +31,16 @@ function json(data: unknown, status = 200): Response {
 function err(message: string, status = 400): Response {
   return json({ error: message }, status);
 }
+
+const FS_ERROR_STATUS: Record<string, number> = {
+  ENOENT: 404,
+  EEXIST: 409,
+  EISDIR: 400,
+  ENOTDIR: 400,
+  ENOTEMPTY: 400,
+  EINVAL: 400,
+  EACCES: 403,
+};
 
 function resolveTenant(queryTenant: string, bodyTenant?: string): string {
   return bodyTenant ?? queryTenant;
@@ -88,10 +99,11 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
       if (!body.path) return err("path required");
       const fs = await getFs(t);
       const content = body.content ?? "";
-      await fs.writeFile(body.path, content);
+      const normalized = normalizePath(body.path);
+      await fs.writeFile(normalized, content);
       fsCache.delete(t);
-      embedFile(sql, t, body.path, content).catch(() => {});
-      return json({ ok: true, path: body.path });
+      embedFile(sql, t, normalized, content).catch(() => {});
+      return json({ ok: true, path: normalized });
     }
 
     if (route === "/file" && req.method === "DELETE") {
@@ -101,7 +113,7 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
       const st = await fs.stat(path);
       await fs.rm(path, { recursive: st.isDirectory, force: true });
       fsCache.delete(tenant);
-      return json({ ok: true, path });
+      return json({ ok: true, path: normalizePath(path) });
     }
 
     if (route === "/mkdir" && req.method === "POST") {
@@ -111,7 +123,7 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
       const fs = await getFs(t);
       await fs.mkdir(body.path, { recursive: true });
       fsCache.delete(t);
-      return json({ ok: true, path: body.path });
+      return json({ ok: true, path: normalizePath(body.path) });
     }
 
     if (route === "/rename" && req.method === "POST") {
@@ -121,7 +133,7 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
       const fs = await getFs(t);
       await fs.mv(body.oldPath, body.newPath);
       fsCache.delete(t);
-      return json({ ok: true, oldPath: body.oldPath, newPath: body.newPath });
+      return json({ ok: true, oldPath: normalizePath(body.oldPath), newPath: normalizePath(body.newPath) });
     }
 
     if (route === "/search" && req.method === "GET") {
@@ -163,7 +175,12 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
 
     return err("Not found", 404);
   } catch (e) {
-    console.error("[api]", errorMessage(e));
-    return err("Something went wrong. Please try again later.", 500);
+    const code = (e as NodeJS.ErrnoException).code;
+    const status = (code ? FS_ERROR_STATUS[code] : undefined) ?? 500;
+    if (status === 500) {
+      console.error("[api]", errorMessage(e));
+      return err("Something went wrong. Please try again later.", 500);
+    }
+    return err(errorMessage(e), status);
   }
 }
