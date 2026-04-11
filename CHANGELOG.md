@@ -20,3 +20,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - In-memory caching of path tree, directory listings, and stat data.
 - Four runnable demo scripts under `examples/` with swappable seed data.
 - Database migration runner (`bun run migrate`).
+
+[0.1.0]: https://github.com/sumedhkhodke/postgres-vfs/releases/tag/v0.1.0
