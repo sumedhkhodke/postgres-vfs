@@ -184,6 +184,125 @@ describe("PostgresFs", () => {
     }
   });
 
+  // ---------------------------------------------------------------------------
+  // Hierarchy validation (ENOTDIR)
+  // ---------------------------------------------------------------------------
+
+  test("mkdir recursive throws ENOTDIR when ancestor is a file", async () => {
+    await fs.writeFile("/hv-mkdirr/blocker", "I'm a file");
+    try {
+      await fs.mkdir("/hv-mkdirr/blocker/child/deep", { recursive: true });
+      expect(true).toBe(false);
+    } catch (err: any) {
+      expect(err.code).toBe("ENOTDIR");
+    }
+    await fs.rm("/hv-mkdirr", { recursive: true });
+  });
+
+  test("mkdir non-recursive throws ENOTDIR when parent is a file", async () => {
+    await fs.writeFile("/hv-mkdir/fileparent", "data");
+    try {
+      await fs.mkdir("/hv-mkdir/fileparent/sub");
+      expect(true).toBe(false);
+    } catch (err: any) {
+      expect(err.code).toBe("ENOTDIR");
+    }
+    await fs.rm("/hv-mkdir", { recursive: true });
+  });
+
+  test("writeFile throws ENOTDIR when ancestor is a file", async () => {
+    await fs.writeFile("/hv-wf/x", "I'm a file");
+    try {
+      await fs.writeFile("/hv-wf/x/y", "should fail");
+      expect(true).toBe(false);
+    } catch (err: any) {
+      expect(err.code).toBe("ENOTDIR");
+    }
+    await fs.rm("/hv-wf", { recursive: true });
+  });
+
+  // ---------------------------------------------------------------------------
+  // mv validation
+  // ---------------------------------------------------------------------------
+
+  test("mv throws ENOENT when source does not exist", async () => {
+    await fs.mkdir("/hv-mv-dest", { recursive: true });
+    try {
+      await fs.mv("/hv-mv-ghost", "/hv-mv-dest/ghost");
+      expect(true).toBe(false);
+    } catch (err: any) {
+      expect(err.code).toBe("ENOENT");
+    }
+    await fs.rm("/hv-mv-dest", { recursive: true });
+  });
+
+  test("mv throws ENOENT for missing source before checking dest parent", async () => {
+    try {
+      await fs.mv("/hv-mv-nosrc", "/hv-mv-nodest/file");
+      expect(true).toBe(false);
+    } catch (err: any) {
+      expect(err.code).toBe("ENOENT");
+      expect(err.message).toContain("/hv-mv-nosrc");
+    }
+  });
+
+  test("mv throws ENOTDIR when dest parent is a file", async () => {
+    await fs.writeFile("/hv-mv-src", "source");
+    await fs.writeFile("/hv-mv-filedest", "I'm a file not a dir");
+    try {
+      await fs.mv("/hv-mv-src", "/hv-mv-filedest/target");
+      expect(true).toBe(false);
+    } catch (err: any) {
+      expect(err.code).toBe("ENOTDIR");
+    }
+    await fs.rm("/hv-mv-src", { force: true });
+    await fs.rm("/hv-mv-filedest", { force: true });
+  });
+
+  test("mv works for symlink-only source", async () => {
+    await fs.mkdir("/hv-mv-sym", { recursive: true });
+    await fs.symlink("/some/target", "/hv-mv-sym/link");
+    await fs.mv("/hv-mv-sym/link", "/hv-mv-sym/moved-link");
+    const target = await fs.readlink("/hv-mv-sym/moved-link");
+    expect(target).toBe("/some/target");
+    expect(await fs.exists("/hv-mv-sym/link")).toBe(false);
+    await fs.rm("/hv-mv-sym", { recursive: true });
+  });
+
+  // ---------------------------------------------------------------------------
+  // cp validation
+  // ---------------------------------------------------------------------------
+
+  test("cp recursive creates destination parent dirs", async () => {
+    await fs.mkdir("/hv-cpsrc/sub", { recursive: true });
+    await fs.writeFile("/hv-cpsrc/sub/file.txt", "content");
+    await fs.cp("/hv-cpsrc", "/hv-cpdst/deep/nested", { recursive: true });
+
+    expect(await fs.exists("/hv-cpdst")).toBe(true);
+    expect(await fs.exists("/hv-cpdst/deep")).toBe(true);
+    expect(await fs.exists("/hv-cpdst/deep/nested/sub/file.txt")).toBe(true);
+    const content = await fs.readFile("/hv-cpdst/deep/nested/sub/file.txt");
+    expect(content).toBe("content");
+    await fs.rm("/hv-cpsrc", { recursive: true });
+    await fs.rm("/hv-cpdst", { recursive: true });
+  });
+
+  test("cp recursive preserves symlinks", async () => {
+    await fs.mkdir("/hv-cpsym/dir", { recursive: true });
+    await fs.writeFile("/hv-cpsym/dir/real.txt", "hello");
+    await fs.symlink("/hv-cpsym/dir/real.txt", "/hv-cpsym/dir/link.txt");
+
+    await fs.cp("/hv-cpsym/dir", "/hv-cpsym/copy", { recursive: true });
+
+    const target = await fs.readlink("/hv-cpsym/copy/link.txt");
+    expect(target).toBe("/hv-cpsym/dir/real.txt");
+    const content = await fs.readFile("/hv-cpsym/copy/real.txt");
+    expect(content).toBe("hello");
+    await fs.rm("/hv-cpsym", { recursive: true });
+  });
+
+  // ---------------------------------------------------------------------------
+
   test("tenant isolation", async () => {
     const otherTenant = "other-" + Date.now();
     const otherFs = new PostgresFs(sql, otherTenant);
