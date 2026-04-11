@@ -136,7 +136,7 @@ fi
 FOOTER='
 
 ---
-postgres-vfs-bot | Type `/postgres-vfs-bot` to interact further'
+postgres-vfs-bot | Type `@postgres-vfs-bot` to interact further'
 
 BODY_WITH_FOOTER="${BODY}${FOOTER}"
 

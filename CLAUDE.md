@@ -50,7 +50,7 @@ via OpenAI embeddings.
 This repo uses a custom GitHub App (`postgres-vfs-bot`) for automation:
 
 - **PR Review**: Auto-reviews every new PR targeting `main` for bugs, security, and performance issues
-- **Mentions**: Type `/postgres-vfs-bot` in any PR or issue comment to ask for help
+- **Mentions**: Type `@postgres-vfs-bot` in any PR or issue comment to ask for help
 - **Triage**: Auto-labels new issues and PRs by category, priority, and area
 - **Dedupe**: Detects duplicate issues when new issues are opened
 - **Tidy**: Type `/tidy` on a PR to collapse resolved review threads

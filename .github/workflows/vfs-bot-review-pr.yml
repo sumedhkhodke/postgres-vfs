@@ -123,5 +123,5 @@ jobs:
             Always end your comment with:
 
             ---
-            postgres-vfs-bot | Type `/postgres-vfs-bot` to interact further
+            postgres-vfs-bot | Type `@postgres-vfs-bot` to interact further
             </response_footer>

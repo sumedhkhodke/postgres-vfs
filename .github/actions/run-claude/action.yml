@@ -37,7 +37,7 @@ inputs:
   trigger-phrase:
     description: "Trigger phrase for mention workflows"
     required: false
-    default: "/postgres-vfs-bot"
+    default: "@postgres-vfs-bot"
 
 outputs:
   conclusion:

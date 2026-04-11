@@ -61,7 +61,7 @@ jobs:
           If your issue is a duplicate, please close it and upvote the existing issue instead.
 
           ---
-          postgres-vfs-bot | Type `/postgres-vfs-bot` to interact further
+          postgres-vfs-bot | Type `@postgres-vfs-bot` to interact further
           PROMPT_END
           EOF
 
