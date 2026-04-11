@@ -1,0 +1,127 @@
+name: VFS Bot - Review PR
+
+on:
+  pull_request:
+    types: [opened]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+  id-token: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate vfs-bot token
+        id: bot-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.VFS_BOT_APP_ID }}
+          private-key: ${{ secrets.VFS_BOT_APP_PRIVATE_KEY }}
+
+      - name: Get PR HEAD SHA
+        id: pr-info
+        env:
+          GH_TOKEN: ${{ steps.bot-token.outputs.token }}
+        run: |
+          HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" --jq '.head.sha')
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Run postgres-vfs-bot for PR Review
+        uses: ./.github/actions/run-claude
+        env:
+          PR_REVIEW_REPO: ${{ github.repository }}
+          PR_REVIEW_PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_REVIEW_HEAD_SHA: ${{ steps.pr-info.outputs.head_sha }}
+          PR_REVIEW_COMMENTS_DIR: /tmp/pr-review-comments
+          PR_REVIEW_HELPERS_DIR: ${{ github.workspace }}/.github/scripts/pr-review
+        with:
+          oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github-token: ${{ steps.bot-token.outputs.token }}
+          allowed-tools: "Glob,Grep,LS,Read,WebSearch,WebFetch,Bash(*)"
+          prompt: |
+            <context>
+            Repository: ${{ github.repository }}
+            PR Number: #${{ github.event.pull_request.number }}
+            PR Title: ${{ github.event.pull_request.title }}
+            PR Author: ${{ github.event.pull_request.user.login }}
+            </context>
+
+            <task>
+            Review this pull request thoroughly. Follow the structured review process below.
+            </task>
+
+            <review_process>
+            Follow these steps in order:
+
+            **Step 1: Gather context**
+            - Read the project's CLAUDE.md for conventions
+            - Run `$PR_REVIEW_HELPERS_DIR/pr-existing-comments.sh --summary` to see existing review threads
+            - Run `$PR_REVIEW_HELPERS_DIR/pr-diff.sh` to see changed files with line-numbered diffs
+              (for large PRs, this lists files only -- review each with `pr-diff.sh <filename>`)
+
+            **Step 2: Review each file**
+            For each changed file:
+            a. If existing threads exist for this file, run:
+               `$PR_REVIEW_HELPERS_DIR/pr-existing-comments.sh --file <path>`
+               Read threads carefully. Do NOT duplicate existing feedback.
+            b. Review the diff. Use `Read` to see full file context when needed.
+               Identify issues matching review_criteria. Do NOT flag:
+               - Issues in unchanged code
+               - Style preferences handled by linters
+               - Pre-existing issues not introduced by this PR
+               - Issues already covered by existing threads
+
+            **Step 3: Leave comments for NEW issues only**
+            For each genuinely new issue:
+            ```bash
+            $PR_REVIEW_HELPERS_DIR/pr-comment.sh <file> <line> \
+              --severity <critical|high|medium|low|nitpick> \
+              --title "Brief description" \
+              --why "Risk or impact" <<'EOF'
+            corrected code here
+            EOF
+            ```
+            Use `--no-suggestion` only when the fix requires changes across multiple locations.
+
+            **Step 4: Submit the review**
+            ```bash
+            $PR_REVIEW_HELPERS_DIR/pr-review.sh <APPROVE|REQUEST_CHANGES|COMMENT> "<review body>"
+            ```
+            - REQUEST_CHANGES: Any CRITICAL or HIGH issues found
+            - COMMENT: MEDIUM issues found (but no critical/high)
+            - APPROVE: No issues, or only LOW/NITPICK suggestions
+            </review_process>
+
+            <review_criteria>
+            Focus on these categories, in priority order:
+            1. Security vulnerabilities (injection, XSS, auth bypass, secrets exposure)
+            2. Logic bugs that could cause runtime failures or incorrect behavior
+            3. Data integrity issues (race conditions, missing transactions)
+            4. Performance bottlenecks (N+1 queries, memory leaks, blocking operations)
+            5. Error handling gaps (unhandled exceptions, missing validation)
+            6. Breaking changes to the public API without migration path
+            7. Missing or incorrect test coverage for critical paths
+            </review_criteria>
+
+            <constraints>
+            This is a read-only review. You CANNOT commit, push, or modify files.
+            Keep your review concise. Only highlight issues that matter.
+            </constraints>
+
+            <response_footer>
+            Always end your comment with:
+
+            ---
+            postgres-vfs-bot | Type `/postgres-vfs-bot` to interact further
+            </response_footer>

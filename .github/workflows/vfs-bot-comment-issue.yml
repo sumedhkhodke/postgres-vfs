@@ -1,0 +1,81 @@
+name: VFS Bot - Comment on Issue
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  actions: read
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  comment:
+    if: |
+      !github.event.issue.pull_request &&
+      contains(github.event.comment.body, '/postgres-vfs-bot') &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate vfs-bot token
+        id: bot-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.VFS_BOT_APP_ID }}
+          private-key: ${{ secrets.VFS_BOT_APP_PRIVATE_KEY }}
+
+      - name: React to comment with eyes
+        env:
+          GH_TOKEN: ${{ steps.bot-token.outputs.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" -f content=eyes 2>/dev/null || true
+
+      - name: Run postgres-vfs-bot for Issue Comment
+        uses: ./.github/actions/run-claude
+        with:
+          oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github-token: ${{ steps.bot-token.outputs.token }}
+          trigger-phrase: "/postgres-vfs-bot"
+          allowed-bots: "*"
+          allowed-tools: "Edit,MultiEdit,Glob,Grep,LS,Read,Write,WebSearch,WebFetch,Bash(*)"
+          prompt: |
+            <context>
+            Repository: ${{ github.repository }}
+            Issue Number: #${{ github.event.issue.number }}
+            Issue Title: ${{ github.event.issue.title }}
+            Issue Author: ${{ github.event.issue.user.login }}
+            Comment Author: ${{ github.event.comment.user.login }}
+            </context>
+
+            <user_request>
+            ${{ github.event.comment.body }}
+            </user_request>
+
+            <task>
+            You have been mentioned in a GitHub issue comment. Understand the request, gather context, complete the task, and respond with results.
+            </task>
+
+            <constraints>
+            You CAN: Read/analyze code, modify files, write code, run tests, execute commands
+            You CAN: Commit code, push changes, create branches, create pull requests
+            </constraints>
+
+            <guidelines>
+            - Read the project's CLAUDE.md for conventions
+            - Be concise and actionable
+            - If the request is unclear, ask clarifying questions
+            </guidelines>
+
+            <response_footer>
+            Always end your comment with:
+
+            ---
+            postgres-vfs-bot | Type `/postgres-vfs-bot` to interact further
+            </response_footer>

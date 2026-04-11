@@ -1,0 +1,108 @@
+name: VFS Bot - Triage
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue or PR number to triage"
+        required: true
+        type: string
+
+concurrency:
+  group: triage-${{ github.event.issue.number || github.event.pull_request.number || inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  label:
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Generate vfs-bot token
+        id: bot-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.VFS_BOT_APP_ID }}
+          private-key: ${{ secrets.VFS_BOT_APP_PRIVATE_KEY }}
+
+      - name: Set triage prompt
+        id: triage-prompt
+        run: |
+          cat >> $GITHUB_OUTPUT << 'EOF'
+          PROMPT<<PROMPT_END
+          You are a triage assistant for postgres-vfs, a virtual filesystem for AI agents backed by PostgreSQL.
+          Analyze the issue/PR and apply appropriate labels.
+
+          IMPORTANT: Apply labels using mcp__github__update_issue. Do NOT post comments unless applying the needs-more-info label.
+
+          Issue/PR Information:
+          - REPO: ${{ github.repository }}
+          - NUMBER: ${{ github.event.issue.number || github.event.pull_request.number || inputs.issue_number }}
+          - TYPE: ${{ github.event.issue && 'issue' || (github.event.pull_request && 'pull_request') || 'unknown' }}
+
+          TRIAGE PROCESS:
+
+          1. Get available labels: Run `gh label list`
+          2. Get issue/PR details using GitHub tools
+          3. Analyze and apply labels:
+
+          CATEGORY (apply exactly one):
+          - bug: Reports of broken functionality or PRs that fix bugs
+          - enhancement: Improvements to existing features, new utilities, internal tooling
+          - feature: Major new headline functionality only
+          - documentation: Primary change is docs, examples, or guides
+
+          PRIORITY (apply if clearly evident):
+          - high-priority: Critical bugs, security issues, blocking core functionality
+          - low-priority: Edge cases, nice-to-haves, cosmetic issues
+
+          AREA (apply only when thematically central):
+          - core-fs: Issues about the PostgresFs class, file operations, symlinks
+          - api: Issues about the HTTP API in src/ui/
+          - ui: Issues about the web UI
+          - search: Issues about full-text search, trigram, or semantic/vector search
+          - database: Issues about migrations, schema, PostgreSQL/pgvector
+
+          STATUS:
+          - needs-more-info: Issue lacks reproduction steps or clear description.
+            When applying, post a brief comment asking the author to provide more details.
+
+          Apply 2-4 labels typically (category + maybe priority + maybe 1-2 areas).
+          PROMPT_END
+          EOF
+
+      - name: Clean up stale lock files
+        run: rm -rf ~/.claude/.locks ~/.local/state/claude/locks || true
+
+      - name: Run postgres-vfs-bot for Triage
+        uses: anthropics/claude-code-action@v1
+        with:
+          github_token: ${{ steps.bot-token.outputs.token }}
+          bot_name: "postgres-vfs-bot"
+          prompt: ${{ steps.triage-prompt.outputs.PROMPT }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          allowed_non_write_users: "*"
+          allowed_bots: "postgres-vfs-bot"
+          claude_args: |
+            --allowedTools Bash(gh label list),mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__update_issue,mcp__github__add_issue_comment,mcp__github__get_pull_request_files
+          settings: |
+            {
+              "model": "claude-sonnet-4-6",
+              "env": {
+                "GH_TOKEN": "${{ steps.bot-token.outputs.token }}"
+              }
+            }
