@@ -7,3 +7,19 @@ export function errorMessage(err: unknown): string {
 export function toVectorLiteral(embedding: number[]): string {
   return `[${embedding.join(",")}]`;
 }
+
+/** Truncate a string to a max length */
+export function truncate(str: string, maxLen: number): string {
+  if (str.length <= maxLen) return str;
+  return str.slice(0, maxLen) + "...";
+}
+
+/** Parse a path into segments */
+export function parsePathSegments(path: string): string[] {
+  return path.split("/").filter(Boolean);
+}
+
+/** Build a SQL LIKE pattern from user input */
+export function buildSearchPattern(query: string): string {
+  return `%${query}%`;
+}
