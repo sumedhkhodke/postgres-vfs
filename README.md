@@ -167,7 +167,7 @@ Four layers between the agent and the database. Each layer knows only the interf
 
 ### 3.1 Layered stack
 
-<p align="center"><img src="diagrams/layered-stack.png" width="400" alt="Layered stack: AI Agent → bash-tool → just-bash → PostgresFs → PostgreSQL"></p>
+<p align="center"><img src="diagrams/layered-stack.png" width="760" alt="Layered stack: AI Agent → bash-tool → just-bash → PostgresFs → PostgreSQL"></p>
 
 <p align="center"><em>Figure 1: Four layers between the agent and the database.</em></p>
 
@@ -179,7 +179,7 @@ When the agent calls `bash({ command: "grep -rn TODO /projects" })`, the call wa
 
 At a high level, a natural-language prompt maps to code entities across four layers (natural language → agent interface → code entities → persistence):
 
-<p align="center"><img src="diagrams/request-flow.png" width="500" alt="Request flow: Natural Language → Agent Interface → Code → Persistence"></p>
+<p align="center"><img src="diagrams/request-flow.png" width="760" alt="Request flow: Natural Language → Agent Interface → Code → Persistence"></p>
 
 <p align="center"><em>Figure 2: Prompt → agent interface → code entities → persistence.</em></p>
 
@@ -223,7 +223,7 @@ just-bash thinks it's talking to a filesystem. It's actually talking to a databa
 
 The `search` command fans out to FTS, trigram, and (optionally) pgvector in parallel, then combines their scores with a weighted formula.
 
-<p align="center"><img src="diagrams/search-engine.png" width="550" alt="Search engine: query → generateEmbedding → hybridSearch → tsvector + pg_trgm + pgvector → weighted score → ranked results"></p>
+<p align="center"><img src="diagrams/search-engine.png" width="760" alt="Search engine: query → generateEmbedding → hybridSearch → tsvector + pg_trgm + pgvector → weighted score → ranked results"></p>
 
 ### 3.5 Two-stage grep
 
