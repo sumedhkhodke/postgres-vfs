@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout PR head branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -29,7 +29,7 @@ jobs:
         id: bot-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ secrets.VFS_BOT_APP_ID }}
+          client-id: ${{ secrets.VFS_BOT_APP_ID }}
           private-key: ${{ secrets.VFS_BOT_APP_PRIVATE_KEY }}
 
       - name: React to comment with eyes
