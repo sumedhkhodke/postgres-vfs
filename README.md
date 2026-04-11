@@ -18,6 +18,8 @@ Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash
 
 <p align="center"><img src="diagrams/db-rows-filesystem.png" width="760" alt="pgAdmin showing vfs_files table rows: directories and markdown files stored as database rows with tenant isolation"></p>
 
+<p align="center"><a id="ui-screenshot"></a><img src="diagrams/ui-screenshot.png" width="760" alt="postgres-vfs Web UI showing the three-column layout: file tree on the left, markdown editor in the middle, and file details on the right."></p>
+
 ---
 
 ## Why do we need `postgres-vfs`?
@@ -465,9 +467,7 @@ search server endpoints           # summary boosts this file in results
 
 ## 6. Web UI
 
-<p align="center"><img src="diagrams/ui-screenshot.png" width="900" alt="postgres-vfs Web UI showing the three-column layout: file tree on the left, markdown editor in the middle, and file details on the right."></p>
-
-<p align="center"><em>Three-column file manager: browse, edit, search, and tag the VFS without writing SQL.</em></p>
+<p align="center"><a href="#ui-screenshot"><em>See the Web UI screenshot above.</em></a></p>
 
 A three-column file manager for browsing, editing, searching, and tagging the VFS. Useful for inspecting what an agent has done without writing SQL.
 
