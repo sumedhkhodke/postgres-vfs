@@ -289,6 +289,7 @@ export class PostgresFs implements IFileSystem {
     if (resolved === "/") return;
 
     if (options?.recursive) {
+      await this.assertAncestorsAreDirs(resolved);
       const dirs = [resolved, ...ancestors(resolved)];
       for (const dir of dirs.reverse()) {
         await this.sql`
@@ -300,8 +301,11 @@ export class PostgresFs implements IFileSystem {
       }
     } else {
       const parent = parentDir(resolved);
-      if (parent !== "/" && !(await this.exists(parent))) {
-        throw fsError("ENOENT", `no such file or directory: ${parent}`);
+      if (parent !== "/") {
+        const parentStat = await this.stat(parent);
+        if (!parentStat.isDirectory) {
+          throw fsError("ENOTDIR", `not a directory: ${parent}`);
+        }
       }
       const existing = await this.sql`
         SELECT is_dir FROM vfs_files
@@ -430,6 +434,9 @@ export class PostgresFs implements IFileSystem {
       if (!options?.recursive) {
         throw fsError("EISDIR", `is a directory: ${srcResolved}`);
       }
+
+      await this.ensureParentDirs(destResolved);
+
       const likePattern = escapeLike(srcResolved) + "/%";
       const rows = await this.sql`
         SELECT path, is_dir, content, mode FROM vfs_files
@@ -446,6 +453,21 @@ export class PostgresFs implements IFileSystem {
         `;
         this.addToCache(newPath, row.is_dir as boolean, 0, row.mode as number);
       }
+
+      // Also copy symlinks under the source tree
+      const symlinks = await this.sql`
+        SELECT path, target FROM vfs_symlinks
+        WHERE tenant_id = ${this.tenantId}
+          AND (path = ${srcResolved} OR path LIKE ${likePattern} ESCAPE '\')
+      `;
+      for (const sym of symlinks) {
+        const newPath = destResolved + (sym.path as string).slice(srcResolved.length);
+        await this.sql`
+          INSERT INTO vfs_symlinks (tenant_id, path, target)
+          VALUES (${this.tenantId}, ${newPath}, ${sym.target})
+          ON CONFLICT (tenant_id, path) DO UPDATE SET target = ${sym.target}
+        `;
+      }
     } else {
       const content = await this.readFile(srcResolved);
       await this.writeFile(destResolved, content);
@@ -455,9 +477,19 @@ export class PostgresFs implements IFileSystem {
   async mv(src: string, dest: string): Promise<void> {
     const srcResolved = normalizePath(src);
     const destResolved = normalizePath(dest);
+
+    // Validate destination parent exists and is a directory
+    const destParent = parentDir(destResolved);
+    if (destParent !== "/") {
+      const parentStat = await this.stat(destParent);
+      if (!parentStat.isDirectory) {
+        throw fsError("ENOTDIR", `not a directory: ${destParent}`);
+      }
+    }
+
     const likePattern = escapeLike(srcResolved) + "/%";
 
-    await this.sql`
+    const result = await this.sql`
       UPDATE vfs_files
       SET path = ${destResolved} || substr(path, ${srcResolved.length + 1})
       WHERE tenant_id = ${this.tenantId}
@@ -470,6 +502,10 @@ export class PostgresFs implements IFileSystem {
       WHERE tenant_id = ${this.tenantId}
         AND (path = ${srcResolved} OR path LIKE ${likePattern} ESCAPE '\')
     `;
+
+    if (result.count === 0) {
+      throw fsError("ENOENT", `no such file or directory: ${srcResolved}`);
+    }
 
     // Collect then invalidate — never mutate Set during iteration
     const toInvalidate = [...this.pathCache].filter(
@@ -558,9 +594,46 @@ export class PostgresFs implements IFileSystem {
   // Helpers
   // ---------------------------------------------------------------------------
 
+  /**
+   * Throw ENOTDIR if any ancestor of `path` exists and is a file (not a dir).
+   * Uses statCache when available, falls back to a single DB query for unknowns.
+   */
+  private async assertAncestorsAreDirs(path: string): Promise<void> {
+    const dirs = ancestors(path);
+    if (dirs.length === 0) return;
+
+    const unchecked: string[] = [];
+    for (const dir of dirs) {
+      const cached = this.statCache.get(dir);
+      if (cached) {
+        if (!cached.isDir) {
+          throw fsError("ENOTDIR", `not a directory: ${dir}`);
+        }
+      } else if (this.cacheWarmed) {
+        // Warm cache miss means the path doesn't exist — that's fine
+      } else {
+        unchecked.push(dir);
+      }
+    }
+
+    if (unchecked.length > 0) {
+      const rows = await this.sql`
+        SELECT path, is_dir FROM vfs_files
+        WHERE tenant_id = ${this.tenantId} AND path = ANY(${unchecked})
+      `;
+      for (const row of rows) {
+        if (!(row.is_dir as boolean)) {
+          throw fsError("ENOTDIR", `not a directory: ${row.path as string}`);
+        }
+      }
+    }
+  }
+
   private async ensureParentDirs(filePath: string): Promise<void> {
     const dirs = ancestors(filePath);
     if (dirs.length === 0) return;
+
+    await this.assertAncestorsAreDirs(filePath);
 
     const missing: string[] = [];
     for (const dir of dirs) {
