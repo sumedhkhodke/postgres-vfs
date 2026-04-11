@@ -4,7 +4,7 @@
 
 If you discover a security vulnerability in postgres-vfs, please report it responsibly.
 
-**Do not open a public issue.** Instead, email **sumedh@sumedhkhodke.com** with:
+**Do not open a public issue.** Instead, email **sumedh.khodke@gmail.com** with:
 
 - A description of the vulnerability
 - Steps to reproduce
