@@ -28,6 +28,26 @@ Examples of unacceptable behavior:
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the project maintainer at **sumedh.khodke@gmail.com**. All complaints will be reviewed and investigated promptly and fairly.
 
+## Enforcement Guidelines
+
+Community leaders will follow these guidelines in determining consequences for any action they deem in violation of this Code of Conduct:
+
+### 1. Correction
+**Impact:** Minor unprofessional or unwelcome behavior.
+**Consequence:** A private written warning with clarity around the nature of the violation and why the behavior was inappropriate. A public apology may be requested.
+
+### 2. Warning
+**Impact:** A violation through a single incident or series of actions.
+**Consequence:** A warning with consequences for continued behavior. No interaction with the people involved for a specified period. Violating these terms may lead to a temporary or permanent ban.
+
+### 3. Temporary Ban
+**Impact:** A serious violation of community standards, including sustained inappropriate behavior.
+**Consequence:** A temporary ban from any sort of interaction or public communication with the community for a specified period. Violating these terms may lead to a permanent ban.
+
+### 4. Permanent Ban
+**Impact:** Demonstrating a pattern of violation of community standards, including sustained inappropriate behavior, harassment of an individual, or aggression toward or disparagement of classes of individuals.
+**Consequence:** A permanent ban from any sort of public interaction within the community.
+
 ## Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1.
