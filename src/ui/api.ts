@@ -163,6 +163,7 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
 
     return err("Not found", 404);
   } catch (e) {
-    return err(errorMessage(e), 500);
+    console.error("[api]", errorMessage(e));
+    return err("Something went wrong. Please try again later.", 500);
   }
 }
