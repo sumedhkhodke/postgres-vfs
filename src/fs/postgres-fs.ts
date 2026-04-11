@@ -478,7 +478,14 @@ export class PostgresFs implements IFileSystem {
     const srcResolved = normalizePath(src);
     const destResolved = normalizePath(dest);
 
-    // Validate destination parent exists and is a directory
+    const srcExists = (await this.exists(srcResolved)) || (await this.sql`
+      SELECT 1 FROM vfs_symlinks
+      WHERE tenant_id = ${this.tenantId} AND path = ${srcResolved} LIMIT 1
+    `).length > 0;
+    if (!srcExists) {
+      throw fsError("ENOENT", `no such file or directory: ${srcResolved}`);
+    }
+
     const destParent = parentDir(destResolved);
     if (destParent !== "/") {
       const parentStat = await this.stat(destParent);
@@ -489,7 +496,7 @@ export class PostgresFs implements IFileSystem {
 
     const likePattern = escapeLike(srcResolved) + "/%";
 
-    const result = await this.sql`
+    await this.sql`
       UPDATE vfs_files
       SET path = ${destResolved} || substr(path, ${srcResolved.length + 1})
       WHERE tenant_id = ${this.tenantId}
@@ -502,10 +509,6 @@ export class PostgresFs implements IFileSystem {
       WHERE tenant_id = ${this.tenantId}
         AND (path = ${srcResolved} OR path LIKE ${likePattern} ESCAPE '\')
     `;
-
-    if (result.count === 0) {
-      throw fsError("ENOENT", `no such file or directory: ${srcResolved}`);
-    }
 
     // Collect then invalidate — never mutate Set during iteration
     const toInvalidate = [...this.pathCache].filter(
@@ -610,7 +613,9 @@ export class PostgresFs implements IFileSystem {
           throw fsError("ENOTDIR", `not a directory: ${dir}`);
         }
       } else if (this.cacheWarmed) {
-        // Warm cache miss means the path doesn't exist — that's fine
+        if (this.pathCache.has(dir)) {
+          unchecked.push(dir);
+        }
       } else {
         unchecked.push(dir);
       }
