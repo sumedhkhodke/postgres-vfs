@@ -1,3 +1,5 @@
+import { escapeLike } from "./fs/path-utils.js";
+
 /** Extract a message string from an unknown error */
 export function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -14,12 +16,7 @@ export function truncate(str: string, maxLen: number): string {
   return str.slice(0, maxLen) + "...";
 }
 
-/** Parse a path into segments */
-export function parsePathSegments(path: string): string[] {
-  return path.split("/").filter(Boolean);
-}
-
-/** Build a SQL LIKE pattern from user input */
+/** Build a SQL LIKE pattern from user input, escaping wildcards */
 export function buildSearchPattern(query: string): string {
-  return `%${query}%`;
+  return `%${escapeLike(query)}%`;
 }
