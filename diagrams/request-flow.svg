@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 800" width="960" height="800">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 820" width="960" height="820">
   <style>
     text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
   </style>
@@ -16,7 +16,7 @@
   </defs>
 
   <!-- Background -->
-  <rect width="960" height="800" fill="#ffffff"/>
+  <rect width="960" height="820" fill="#ffffff"/>
 
   <!-- Title -->
   <text x="480" y="44" text-anchor="middle" font-size="22" font-weight="700" fill="#111827">Request Flow</text>
@@ -42,10 +42,10 @@
   <text x="630" y="278" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">executeCommand()</text>
   <text x="630" y="296" text-anchor="middle" font-size="12" fill="#6b7280">sandbox adapter</text>
 
-  <!-- Arrows within layer 2 -->
+  <!-- Arrow within layer 2 -->
   <line x1="440" y1="280" x2="510" y2="280" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
 
-  <!-- Arrows down from layer 2 -->
+  <!-- Arrow down from layer 2 -->
   <line x1="630" y1="308" x2="630" y2="376" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
 
   <!-- ===== LAYER 3: Code ===== -->
@@ -67,7 +67,7 @@
   <text x="690" y="534" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">hybridSearch()</text>
   <text x="690" y="552" text-anchor="middle" font-size="12" fill="#6b7280">custom commands</text>
 
-  <!-- Arrows from just-bash to PostgresFs and hybridSearch -->
+  <!-- Arrows from just-bash -->
   <path d="M 470,472 L 470,500 L 330,500 L 330,508" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
   <rect x="338" y="480" width="90" height="16" rx="3" fill="#ffffff"/>
   <text x="383" y="492" text-anchor="middle" font-size="10" fill="#6b7280">standard ops</text>
@@ -85,23 +85,23 @@
   <path d="M 270,564 L 270,628 L 370,628" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
   <path d="M 690,564 L 690,628 L 590,628" stroke="#ea580c" stroke-width="1.5" fill="none" marker-end="url(#arrow-orange)"/>
 
-  <!-- ===== LAYER 4: Persistence ===== -->
   <!-- Arrow down to persistence -->
-  <line x1="480" y1="656" x2="480" y2="688" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <line x1="480" y1="656" x2="480" y2="696" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
 
-  <rect x="60" y="692" width="840" height="56" rx="10" ry="10" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1" stroke-dasharray="6,3"/>
-  <text x="84" y="712" font-size="11" font-weight="600" fill="#16a34a">PERSISTENCE</text>
+  <!-- ===== LAYER 4: Persistence ===== -->
+  <rect x="60" y="700" width="840" height="60" rx="10" ry="10" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="84" y="720" font-size="11" font-weight="600" fill="#16a34a">PERSISTENCE</text>
 
-  <!-- vfs_files cylinder (inline) -->
-  <ellipse cx="480" cy="704" rx="100" ry="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
-  <rect x="380" y="704" width="200" height="24" fill="#dcfce7" stroke="none"/>
-  <line x1="380" y1="704" x2="380" y2="728" stroke="#16a34a" stroke-width="1.5"/>
-  <line x1="580" y1="704" x2="580" y2="728" stroke="#16a34a" stroke-width="1.5"/>
-  <ellipse cx="480" cy="728" rx="100" ry="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
-  <text x="480" y="722" text-anchor="middle" font-size="14" font-weight="600" fill="#166534">vfs_files</text>
+  <!-- vfs_files cylinder -->
+  <ellipse cx="480" cy="714" rx="100" ry="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <rect x="380" y="714" width="200" height="24" fill="#dcfce7" stroke="none"/>
+  <line x1="380" y1="714" x2="380" y2="738" stroke="#16a34a" stroke-width="1.5"/>
+  <line x1="580" y1="714" x2="580" y2="738" stroke="#16a34a" stroke-width="1.5"/>
+  <ellipse cx="480" cy="738" rx="100" ry="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="480" y="732" text-anchor="middle" font-size="14" font-weight="600" fill="#166534">vfs_files</text>
 
-  <!-- Legend -->
-  <g transform="translate(64, 776)">
+  <!-- Legend — well below persistence layer -->
+  <g transform="translate(340, 796)">
     <line x1="0" y1="0" x2="28" y2="0" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
     <text x="34" y="4" font-size="11" fill="#6b7280">Main data flow</text>
     <line x1="160" y1="0" x2="188" y2="0" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
