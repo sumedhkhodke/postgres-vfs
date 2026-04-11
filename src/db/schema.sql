@@ -55,6 +55,10 @@ CREATE INDEX IF NOT EXISTS idx_vfs_dir ON vfs_files (tenant_id, is_dir) WHERE is
 -- Symlink lookup
 CREATE INDEX IF NOT EXISTS idx_vfs_symlinks ON vfs_symlinks (tenant_id, path text_pattern_ops);
 
+-- Backfill updated_at for existing vfs_symlinks tables (idempotent)
+ALTER TABLE vfs_symlinks
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
 -- Updated_at trigger for automatic timestamp
 CREATE OR REPLACE FUNCTION vfs_update_timestamp()
 RETURNS TRIGGER AS $$
