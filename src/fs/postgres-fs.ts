@@ -267,7 +267,7 @@ export class PostgresFs implements IFileSystem {
     const resolved = normalizePath(path);
 
     const symlinks = await this.sql`
-      SELECT target, created_at FROM vfs_symlinks
+      SELECT target, updated_at FROM vfs_symlinks
       WHERE tenant_id = ${this.tenantId} AND path = ${resolved}
     `;
     if (symlinks.length > 0) {
@@ -277,7 +277,7 @@ export class PostgresFs implements IFileSystem {
         isSymbolicLink: true,
         mode: MODE_SYMLINK,
         size: (symlinks[0].target as string).length,
-        mtime: symlinks[0].created_at as Date,
+        mtime: symlinks[0].updated_at as Date,
       };
     }
 

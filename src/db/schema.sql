@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS vfs_symlinks (
   path        TEXT NOT NULL,
   target      TEXT NOT NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(tenant_id, path)
 );
 
@@ -66,4 +67,9 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS vfs_files_updated_at ON vfs_files;
 CREATE TRIGGER vfs_files_updated_at
   BEFORE UPDATE ON vfs_files
+  FOR EACH ROW EXECUTE FUNCTION vfs_update_timestamp();
+
+DROP TRIGGER IF EXISTS vfs_symlinks_updated_at ON vfs_symlinks;
+CREATE TRIGGER vfs_symlinks_updated_at
+  BEFORE UPDATE ON vfs_symlinks
   FOR EACH ROW EXECUTE FUNCTION vfs_update_timestamp();
