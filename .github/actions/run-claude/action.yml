@@ -1,0 +1,70 @@
+name: "Run Bot"
+description: "Run postgres-vfs-bot with standard configuration"
+author: "postgres-vfs"
+
+branding:
+  icon: "cpu"
+  color: "blue"
+
+inputs:
+  prompt:
+    description: "Prompt to pass to the bot"
+    required: true
+
+  oauth-token:
+    description: "OAuth token for authentication"
+    required: true
+
+  github-token:
+    description: "GitHub token for the bot to operate with"
+    required: true
+
+  allowed-tools:
+    description: "Comma-separated list of allowed tools"
+    required: false
+    default: ""
+
+  model:
+    description: "Model to use"
+    required: false
+    default: "claude-sonnet-4-6"
+
+  allowed-bots:
+    description: "Allowed bot usernames, or '*' for all bots"
+    required: false
+    default: ""
+
+  trigger-phrase:
+    description: "Trigger phrase for mention workflows"
+    required: false
+    default: "/postgres-vfs-bot"
+
+outputs:
+  conclusion:
+    description: "The conclusion of the bot run"
+    value: ${{ steps.claude.outputs.conclusion }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Clean up stale lock files
+      shell: bash
+      run: rm -rf ~/.claude/.locks ~/.local/state/claude/locks || true
+
+    - name: Run postgres-vfs-bot
+      id: claude
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      uses: anthropics/claude-code-action@v1
+      with:
+        github_token: ${{ inputs.github-token }}
+        claude_code_oauth_token: ${{ inputs.oauth-token }}
+        bot_name: "postgres-vfs-bot"
+        trigger_phrase: ${{ inputs.trigger-phrase }}
+        allowed_bots: ${{ inputs.allowed-bots }}
+        prompt: ${{ inputs.prompt }}
+        claude_args: |
+          ${{ inputs.allowed-tools != '' && format('--allowedTools {0}', inputs.allowed-tools) || '' }}
+          --model ${{ inputs.model }}
+        settings: |
+          {"model": "${{ inputs.model }}"}
