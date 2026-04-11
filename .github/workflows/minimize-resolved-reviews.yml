@@ -10,7 +10,7 @@ on:
 
 concurrency:
   group: minimize-reviews-${{ github.event.pull_request.number || github.event.issue.number }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   pull-requests: write
