@@ -1,0 +1,107 @@
+name: VFS Bot - Dedupe Issues
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number to check for duplicates"
+        required: true
+        type: string
+
+jobs:
+  dedupe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate vfs-bot token
+        id: bot-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.VFS_BOT_APP_ID }}
+          private-key: ${{ secrets.VFS_BOT_APP_PRIVATE_KEY }}
+
+      - name: Set dedupe prompt
+        id: dedupe-prompt
+        run: |
+          cat >> $GITHUB_OUTPUT << 'EOF'
+          PROMPT<<PROMPT_END
+          Find up to 3 likely duplicate issues for GitHub issue ${{ github.repository }}/issues/${{ github.event.issue.number || inputs.issue_number }}.
+
+          Follow these steps:
+
+          1. Check if the issue (a) is closed, (b) does not need deduping (broad feedback), or (c) already has a duplicates comment. If so, do not proceed.
+
+          2. View the issue and produce a summary.
+
+          3. Search GitHub for duplicates using diverse keywords and approaches.
+
+          4. Filter out false positives. Only flag issues that describe the same underlying problem, not issues that share keywords or involve the same subsystem.
+
+          5. If duplicates are found (up to 3), comment on the issue. If none, do NOT comment.
+
+          Use `gh` to interact with GitHub. Never include this issue as a duplicate of itself.
+
+          Comment format (if duplicates found):
+
+          ---
+          Found N possible duplicate issue(s):
+
+          1. #123: Issue title here
+
+          If your issue is a duplicate, please close it and upvote the existing issue instead.
+
+          ---
+          postgres-vfs-bot | Type `/postgres-vfs-bot` to interact further
+          PROMPT_END
+          EOF
+
+      - name: Clean up stale lock files
+        run: rm -rf ~/.claude/.locks ~/.local/state/claude/locks || true
+
+      - name: Run postgres-vfs-bot for Dedupe
+        uses: anthropics/claude-code-action@v1
+        with:
+          github_token: ${{ steps.bot-token.outputs.token }}
+          bot_name: "postgres-vfs-bot"
+          prompt: ${{ steps.dedupe-prompt.outputs.PROMPT }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          allowed_non_write_users: "*"
+          claude_args: |
+            --allowedTools Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh api:*),Bash(gh issue comment:*),Task
+          settings: |
+            {
+              "model": "claude-sonnet-4-6",
+              "env": {
+                "GH_TOKEN": "${{ steps.bot-token.outputs.token }}"
+              }
+            }
+
+      - name: Add potential-duplicate label if bot commented
+        env:
+          GH_TOKEN: ${{ steps.bot-token.outputs.token }}
+        run: |
+          ISSUE=${{ github.event.issue.number || inputs.issue_number }}
+          CUTOFF=$(date -u -d '10 minutes ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null \
+            || date -u -v-10M '+%Y-%m-%dT%H:%M:%SZ')
+          HAS_RECENT=$(gh api "repos/${{ github.repository }}/issues/${ISSUE}/comments?sort=created&direction=desc&per_page=10" \
+            --jq "[.[] | select(
+              .user.type == \"Bot\" and
+              (.body | test(\"possible duplicate issues\"; \"i\")) and
+              .created_at >= \"${CUTOFF}\"
+            )] | length")
+          if [ "$HAS_RECENT" -gt 0 ]; then
+            gh issue edit "$ISSUE" --add-label "potential-duplicate" -R "${{ github.repository }}"
+            echo "Added potential-duplicate label to #${ISSUE}"
+          else
+            echo "No duplicate comment found, skipping label"
+          fi

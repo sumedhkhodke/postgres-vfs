@@ -1,0 +1,109 @@
+name: VFS Bot - Comment on PR
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: read
+  id-token: write
+
+jobs:
+  comment:
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '/postgres-vfs-bot') &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout PR head branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate vfs-bot token
+        id: bot-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.VFS_BOT_APP_ID }}
+          private-key: ${{ secrets.VFS_BOT_APP_PRIVATE_KEY }}
+
+      - name: React to comment with eyes
+        env:
+          GH_TOKEN: ${{ steps.bot-token.outputs.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" -f content=eyes 2>/dev/null || true
+
+      - name: Get PR HEAD SHA
+        id: pr-info
+        env:
+          GH_TOKEN: ${{ steps.bot-token.outputs.token }}
+        run: |
+          PR_NUMBER="${{ github.event.issue.number }}"
+          HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" --jq '.head.sha')
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+          echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Run postgres-vfs-bot for PR Comment
+        uses: ./.github/actions/run-claude
+        env:
+          MENTION_REPO: ${{ github.repository }}
+          MENTION_PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
+          MENTION_SCRIPTS: ${{ github.workspace }}/.github/scripts/mention
+          PR_REVIEW_REPO: ${{ github.repository }}
+          PR_REVIEW_PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
+          PR_REVIEW_HEAD_SHA: ${{ steps.pr-info.outputs.head_sha }}
+          PR_REVIEW_COMMENTS_DIR: /tmp/pr-review-comments
+          PR_REVIEW_HELPERS_DIR: ${{ github.workspace }}/.github/scripts/pr-review
+        with:
+          oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github-token: ${{ steps.bot-token.outputs.token }}
+          trigger-phrase: "/postgres-vfs-bot"
+          allowed-bots: "*"
+          allowed-tools: "Edit,MultiEdit,Glob,Grep,LS,Read,Write,WebSearch,WebFetch,Bash(*)"
+          prompt: |
+            <context>
+            Repository: ${{ github.repository }}
+            PR Number: #${{ steps.pr-info.outputs.pr_number }}
+            PR Title: ${{ github.event.issue.title }}
+            PR Author: ${{ github.event.issue.user.login }}
+            Comment Author: ${{ github.event.comment.user.login }}
+
+            The PR head branch has been checked out. The workspace is ready.
+            </context>
+
+            <user_request>
+            ${{ github.event.comment.body }}
+            </user_request>
+
+            <task>
+            You have been mentioned in a Pull Request comment. Understand the request, gather context, complete the task, and respond with results.
+            </task>
+
+            <constraints>
+            You CAN: Read/analyze code, modify files, write code, run tests, execute commands, resolve review threads
+            You CANNOT: Commit code, push changes, create branches, create pull requests
+            </constraints>
+
+            <pr_review_tools>
+            For PR reviews, use the helper scripts:
+            - `$PR_REVIEW_HELPERS_DIR/pr-diff.sh` - view the PR diff
+            - `$PR_REVIEW_HELPERS_DIR/pr-existing-comments.sh` - see existing threads
+            - `$PR_REVIEW_HELPERS_DIR/pr-comment.sh` - queue inline comments
+            - `$PR_REVIEW_HELPERS_DIR/pr-review.sh` - submit a review
+
+            For review thread management:
+            - `$MENTION_SCRIPTS/gh-get-review-threads.sh` - list unresolved threads
+            - `$MENTION_SCRIPTS/gh-resolve-review-thread.sh THREAD_ID "message"` - resolve a thread
+            </pr_review_tools>
+
+            <response_footer>
+            Always end your comment with:
+
+            ---
+            postgres-vfs-bot | Type `/postgres-vfs-bot` to interact further
+            </response_footer>
