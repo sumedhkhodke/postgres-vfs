@@ -12,7 +12,7 @@
 
 A PostgreSQL-backed virtual filesystem for AI agents. Agents run `cat`, `ls`, `grep`, `find`, `mkdir`, `rm`, and 70+ other Unix commands against a persistent, multi-tenant workspace and all data lives in Postgres.
 
-Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash interpreter by Vercel, with a custom `IFileSystem` that compiles every filesystem call into SQL. Inspired by [Mintlify's ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) that can read-write and is Postgres-native.
+Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash interpreter, with a custom `IFileSystem` that compiles every filesystem call into SQL. Inspired by [ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) that can read-write and is Postgres-native.
 
 <p align="center"><img src="diagrams/demo.gif" width="760" alt="Terminal demo: an AI agent queries meeting files via bash-tool, using find and grep to locate deadlines across a Postgres-backed virtual filesystem"></p>
 
@@ -576,7 +576,7 @@ postgres-vfs/
 | Package | Purpose |
 |---------|---------|
 | [just-bash](https://github.com/vercel-labs/just-bash) | TypeScript bash interpreter with pluggable filesystem |
-| [bash-tool](https://github.com/vercel-labs/bash-tool) | Vercel AI SDK bash/readFile/writeFile tools |
+| [bash-tool](https://github.com/vercel-labs/bash-tool) | AI SDK bash/readFile/writeFile tools |
 | [postgres](https://github.com/porsager/postgres) | PostgreSQL client for Bun/Node |
 | [pgvector](https://github.com/pgvector/pgvector-node) | Vector type support for optional semantic search |
 
@@ -617,7 +617,7 @@ The 75+ supported commands are filesystem and text utilities (`grep`, `sed`, `aw
 
 ## 10. Glossary
 
-- **bash-tool:** Vercel Labs toolkit exposing `bash`, `readFile`, and `writeFile` as AI SDK tools.
+- **bash-tool:** Toolkit exposing `bash`, `readFile`, and `writeFile` as AI SDK tools.
 - **just-bash:** TypeScript bash interpreter with a pluggable `IFileSystem` backend; parses commands, pipes, redirects, and globs.
 - **IFileSystem:** the ~20-method TypeScript interface just-bash calls; `PostgresFs` implements it against Postgres.
 - **PostgresFs:** this repo's `IFileSystem` implementation. Every filesystem op becomes a SQL query.
@@ -635,8 +635,8 @@ The 75+ supported commands are filesystem and text utilities (`grep`, `sed`, `aw
 
 ## Acknowledgments
 
-- [Mintlify's ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) for the virtual filesystem concept
-- [just-bash by Vercel Labs](https://github.com/vercel-labs/just-bash) for the sandboxed bash interpreter
+- [ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) for the virtual filesystem concept
+- [just-bash](https://github.com/vercel-labs/just-bash) for the sandboxed bash interpreter
 - [agent-vfs](https://github.com/johannesmichalke/agent-vfs) for prior art taste on database-backed agent filesystems
 
 ## Contributing
