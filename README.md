@@ -4,7 +4,7 @@
 
 # postgres-vfs
 
-[![CI](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml/badge.svg)](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sumedhkhodke/postgres-vfs) [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.0-000000?style=flat&logo=bun&logoColor=white)](https://bun.sh) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%E2%89%A514-316192?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/) [![pgvector](https://img.shields.io/badge/pgvector-optional-4169E1?style=flat&logo=databricks&logoColor=white)](https://github.com/pgvector/pgvector) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat&logo=opensourceinitiative&logoColor=white)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat)](CONTRIBUTING.md) [![GitHub last commit](https://img.shields.io/github/last-commit/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/commits/main) [![GitHub issues](https://img.shields.io/github/issues/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/issues) [![Star History](https://img.shields.io/github/stars/sumedhkhodke/postgres-vfs?style=flat&logo=github&label=Stars)](https://github.com/sumedhkhodke/postgres-vfs/stargazers)
+[![CI](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml/badge.svg)](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sumedhkhodke/postgres-vfs) [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.0-000000?style=flat&logo=bun&logoColor=white)](https://bun.sh) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%E2%89%A514-316192?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/) [![pgvector](https://img.shields.io/badge/pgvector-optional-4169E1?style=flat&logo=databricks&logoColor=white)](https://github.com/pgvector/pgvector) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat&logo=opensourceinitiative&logoColor=white)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat)](#contributing) [![GitHub last commit](https://img.shields.io/github/last-commit/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/commits/main) [![GitHub issues](https://img.shields.io/github/issues/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/issues) [![Star History](https://img.shields.io/github/stars/sumedhkhodke/postgres-vfs?style=flat&logo=github&label=Stars)](https://github.com/sumedhkhodke/postgres-vfs/stargazers)
 
 **A PostgreSQL-backed virtual filesystem for AI agents.**
 
@@ -12,7 +12,7 @@
 
 A PostgreSQL-backed virtual filesystem for AI agents. Agents run `cat`, `ls`, `grep`, `find`, `mkdir`, `rm`, and 70+ other Unix commands against a persistent, multi-tenant workspace and all data lives in Postgres.
 
-Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash interpreter by Vercel, with a custom `IFileSystem` that compiles every filesystem call into SQL. Inspired by [Mintlify's ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) that can read-write and is Postgres-native.
+Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash interpreter, with a custom `IFileSystem` that compiles every filesystem call into SQL. Inspired by [ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) that can read-write and is Postgres-native.
 
 <p align="center"><img src="diagrams/demo.gif" width="760" alt="Terminal demo: an AI agent queries meeting files via bash-tool, using find and grep to locate deadlines across a Postgres-backed virtual filesystem"></p>
 
@@ -167,7 +167,7 @@ Four layers between the agent and the database. Each layer knows only the interf
 
 ### 3.1 Layered stack
 
-<p align="center"><img src="diagrams/layered-stack.png" width="400" alt="Layered stack: AI Agent → bash-tool → just-bash → PostgresFs → PostgreSQL"></p>
+<p align="center"><img src="diagrams/layered-stack.png" width="760" alt="Layered stack: AI Agent → bash-tool → just-bash → PostgresFs → PostgreSQL"></p>
 
 <p align="center"><em>Figure 1: Four layers between the agent and the database.</em></p>
 
@@ -179,7 +179,7 @@ When the agent calls `bash({ command: "grep -rn TODO /projects" })`, the call wa
 
 At a high level, a natural-language prompt maps to code entities across four layers (natural language → agent interface → code entities → persistence):
 
-<p align="center"><img src="diagrams/request-flow.png" width="500" alt="Request flow: Natural Language → Agent Interface → Code → Persistence"></p>
+<p align="center"><img src="diagrams/request-flow.png" width="760" alt="Request flow: Natural Language → Agent Interface → Code → Persistence"></p>
 
 <p align="center"><em>Figure 2: Prompt → agent interface → code entities → persistence.</em></p>
 
@@ -223,7 +223,7 @@ just-bash thinks it's talking to a filesystem. It's actually talking to a databa
 
 The `search` command fans out to FTS, trigram, and (optionally) pgvector in parallel, then combines their scores with a weighted formula.
 
-<p align="center"><img src="diagrams/search-engine.png" width="550" alt="Search engine: query → generateEmbedding → hybridSearch → tsvector + pg_trgm + pgvector → weighted score → ranked results"></p>
+<p align="center"><img src="diagrams/search-engine.png" width="760" alt="Search engine: query → generateEmbedding → hybridSearch → tsvector + pg_trgm + pgvector → weighted score → ranked results"></p>
 
 ### 3.5 Two-stage grep
 
@@ -576,7 +576,7 @@ postgres-vfs/
 | Package | Purpose |
 |---------|---------|
 | [just-bash](https://github.com/vercel-labs/just-bash) | TypeScript bash interpreter with pluggable filesystem |
-| [bash-tool](https://github.com/vercel-labs/bash-tool) | Vercel AI SDK bash/readFile/writeFile tools |
+| [bash-tool](https://github.com/vercel-labs/bash-tool) | AI SDK bash/readFile/writeFile tools |
 | [postgres](https://github.com/porsager/postgres) | PostgreSQL client for Bun/Node |
 | [pgvector](https://github.com/pgvector/pgvector-node) | Vector type support for optional semantic search |
 
@@ -617,7 +617,7 @@ The 75+ supported commands are filesystem and text utilities (`grep`, `sed`, `aw
 
 ## 10. Glossary
 
-- **bash-tool:** Vercel Labs toolkit exposing `bash`, `readFile`, and `writeFile` as AI SDK tools.
+- **bash-tool:** Toolkit exposing `bash`, `readFile`, and `writeFile` as AI SDK tools.
 - **just-bash:** TypeScript bash interpreter with a pluggable `IFileSystem` backend; parses commands, pipes, redirects, and globs.
 - **IFileSystem:** the ~20-method TypeScript interface just-bash calls; `PostgresFs` implements it against Postgres.
 - **PostgresFs:** this repo's `IFileSystem` implementation. Every filesystem op becomes a SQL query.
@@ -635,13 +635,13 @@ The 75+ supported commands are filesystem and text utilities (`grep`, `sed`, `aw
 
 ## Acknowledgments
 
-- [Mintlify's ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) for the virtual filesystem concept
-- [just-bash by Vercel Labs](https://github.com/vercel-labs/just-bash) for the sandboxed bash interpreter
+- [ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) for the virtual filesystem concept
+- [just-bash](https://github.com/vercel-labs/just-bash) for the sandboxed bash interpreter
 - [agent-vfs](https://github.com/johannesmichalke/agent-vfs) for prior art taste on database-backed agent filesystems
 
 ## Contributing
 
-Contributions are welcome. Please open an issue first to discuss what you'd like to change, then submit a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+Contributions are welcome. Please open an issue first to discuss what you'd like to change, then submit a pull request.
 
 ## License
 

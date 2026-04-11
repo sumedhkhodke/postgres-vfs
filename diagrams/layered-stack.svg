@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600">
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-claude" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#5a5a5a"/>
+    </marker>
+    <filter id="shadow-soft" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#000000" flood-opacity="0.03"/>
+    </filter>
+  </defs>
+
+  <!-- Warm cream background -->
+  <rect width="960" height="600" fill="#f8f6f3"/>
+
+  <!-- Title -->
+  <text x="480" y="38" text-anchor="middle" font-size="20" font-weight="700" fill="#1a1a1a">Layered Architecture</text>
+
+  <!-- Layer labels on left -->
+  <text x="56" y="88" font-size="12" font-weight="600" fill="#6a6a6a">Interface</text>
+  <text x="56" y="188" font-size="12" font-weight="600" fill="#6a6a6a">Adapter</text>
+  <text x="56" y="288" font-size="12" font-weight="600" fill="#6a6a6a">Interpreter</text>
+  <text x="56" y="388" font-size="12" font-weight="600" fill="#6a6a6a">Filesystem</text>
+  <text x="56" y="504" font-size="12" font-weight="600" fill="#6a6a6a">Storage</text>
+
+  <!-- Layer 1: AI Agent (blue - input) -->
+  <rect x="280" y="60" width="400" height="56" rx="12" ry="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5" filter="url(#shadow-soft)"/>
+  <text x="480" y="86" text-anchor="middle" font-size="16" font-weight="600" fill="#1a1a1a">AI Agent</text>
+  <text x="480" y="104" text-anchor="middle" font-size="13" fill="#4a4a4a">LLM with tool-calling capability</text>
+
+  <!-- Arrow 1 -->
+  <line x1="480" y1="116" x2="480" y2="152" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow-claude)"/>
+  <rect x="447" y="126" width="66" height="16" rx="3" fill="#f8f6f3"/>
+  <text x="480" y="138" text-anchor="middle" font-size="11" fill="#5a5a5a">tool_call()</text>
+
+  <!-- Layer 2: bash-tool (beige - adapter) -->
+  <rect x="280" y="160" width="400" height="56" rx="12" ry="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5" filter="url(#shadow-soft)"/>
+  <text x="480" y="186" text-anchor="middle" font-size="16" font-weight="600" fill="#1a1a1a">bash-tool</text>
+  <text x="480" y="204" text-anchor="middle" font-size="13" fill="#4a4a4a">bash &#xB7; readFile &#xB7; writeFile</text>
+
+  <!-- Arrow 2 -->
+  <line x1="480" y1="216" x2="480" y2="252" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow-claude)"/>
+  <rect x="433" y="226" width="94" height="16" rx="3" fill="#f8f6f3"/>
+  <text x="480" y="238" text-anchor="middle" font-size="11" fill="#5a5a5a">parse &amp; exec</text>
+
+  <!-- Layer 3: just-bash (green - interpreter) -->
+  <rect x="280" y="260" width="400" height="56" rx="12" ry="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#shadow-soft)"/>
+  <text x="480" y="286" text-anchor="middle" font-size="16" font-weight="600" fill="#1a1a1a">just-bash</text>
+  <text x="480" y="304" text-anchor="middle" font-size="13" fill="#4a4a4a">commands &#xB7; pipes &#xB7; redirects &#xB7; globs</text>
+
+  <!-- Arrow 3 -->
+  <line x1="480" y1="316" x2="480" y2="352" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow-claude)"/>
+  <rect x="433" y="326" width="94" height="16" rx="3" fill="#f8f6f3"/>
+  <text x="480" y="338" text-anchor="middle" font-size="11" fill="#5a5a5a">filesystem ops</text>
+
+  <!-- Layer 4: PostgresFs (soft lavender - filesystem) -->
+  <rect x="280" y="360" width="400" height="56" rx="12" ry="12" fill="#c7b8ea" stroke="#4a4a4a" stroke-width="2.5" filter="url(#shadow-soft)"/>
+  <text x="480" y="386" text-anchor="middle" font-size="16" font-weight="600" fill="#1a1a1a">PostgresFs</text>
+  <text x="480" y="404" text-anchor="middle" font-size="13" fill="#4a4a4a">IFileSystem &#x2192; SQL</text>
+
+  <!-- Arrow 4 -->
+  <line x1="480" y1="416" x2="480" y2="452" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow-claude)"/>
+  <rect x="440" y="428" width="80" height="16" rx="3" fill="#f8f6f3"/>
+  <text x="480" y="440" text-anchor="middle" font-size="11" fill="#5a5a5a">SQL queries</text>
+
+  <!-- Layer 5: PostgreSQL (gray - storage) cylinder -->
+  <ellipse cx="480" cy="468" rx="200" ry="16" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="280" y="468" width="400" height="72" fill="#e8e6e3" stroke="none"/>
+  <line x1="280" y1="468" x2="280" y2="540" stroke="#4a4a4a" stroke-width="2.5"/>
+  <line x1="680" y1="468" x2="680" y2="540" stroke="#4a4a4a" stroke-width="2.5"/>
+  <ellipse cx="480" cy="540" rx="200" ry="16" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="480" y="496" text-anchor="middle" font-size="16" font-weight="600" fill="#1a1a1a">PostgreSQL</text>
+  <text x="480" y="516" text-anchor="middle" font-size="13" fill="#4a4a4a">vfs_files &#xB7; FTS &#xB7; trigram &#xB7; pgvector &#xB7; RLS</text>
+
+  <!-- Subtle divider lines between layers -->
+  <line x1="120" y1="140" x2="900" y2="140" stroke="#ddd8d2" stroke-width="0.5" stroke-dasharray="4,4"/>
+  <line x1="120" y1="240" x2="900" y2="240" stroke="#ddd8d2" stroke-width="0.5" stroke-dasharray="4,4"/>
+  <line x1="120" y1="340" x2="900" y2="340" stroke="#ddd8d2" stroke-width="0.5" stroke-dasharray="4,4"/>
+  <line x1="120" y1="440" x2="900" y2="440" stroke="#ddd8d2" stroke-width="0.5" stroke-dasharray="4,4"/>
+</svg>
