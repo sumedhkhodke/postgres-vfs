@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 820" width="960" height="820">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600">
   <style>
     text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
   </style>
@@ -11,100 +11,95 @@
       <polygon points="0 0, 10 3.5, 0 7" fill="#ea580c"/>
     </marker>
     <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
-      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000000" flood-opacity="0.06"/>
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.06"/>
     </filter>
   </defs>
 
-  <!-- Background -->
-  <rect width="960" height="820" fill="#ffffff"/>
+  <rect width="960" height="600" fill="#ffffff"/>
 
   <!-- Title -->
-  <text x="480" y="44" text-anchor="middle" font-size="22" font-weight="700" fill="#111827">Request Flow</text>
-  <text x="480" y="66" text-anchor="middle" font-size="13" fill="#6b7280">Prompt &#x2192; agent interface &#x2192; code entities &#x2192; persistence</text>
+  <text x="480" y="32" text-anchor="middle" font-size="20" font-weight="700" fill="#111827">Request Flow</text>
+  <text x="480" y="50" text-anchor="middle" font-size="12" fill="#6b7280">Prompt &#x2192; agent interface &#x2192; code entities &#x2192; persistence</text>
 
-  <!-- ===== LAYER 1: Natural Language ===== -->
-  <rect x="60" y="90" width="840" height="80" rx="10" ry="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1" stroke-dasharray="6,3"/>
-  <text x="84" y="110" font-size="11" font-weight="600" fill="#2563eb">NATURAL LANGUAGE</text>
-  <rect x="340" y="114" width="280" height="42" rx="8" ry="8" fill="#ffffff" stroke="#2563eb" stroke-width="2" filter="url(#shadow)"/>
-  <text x="480" y="141" text-anchor="middle" font-size="15" font-weight="600" fill="#1e40af">&quot;Find all TODOs&quot;</text>
+  <!-- LAYER 1: Natural Language -->
+  <rect x="60" y="64" width="840" height="56" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="80" y="80" font-size="10" font-weight="600" fill="#2563eb">NATURAL LANGUAGE</text>
+  <rect x="360" y="76" width="240" height="34" rx="8" ry="8" fill="#ffffff" stroke="#2563eb" stroke-width="2" filter="url(#shadow)"/>
+  <text x="480" y="98" text-anchor="middle" font-size="14" font-weight="600" fill="#1e40af">&quot;Find all TODOs&quot;</text>
 
-  <!-- Arrow down -->
-  <line x1="480" y1="170" x2="480" y2="210" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <!-- Arrow -->
+  <line x1="480" y1="120" x2="480" y2="146" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
 
-  <!-- ===== LAYER 2: Agent Interface ===== -->
-  <rect x="60" y="218" width="840" height="110" rx="10" ry="10" fill="#faf5ff" stroke="#e9d5ff" stroke-width="1" stroke-dasharray="6,3"/>
-  <text x="84" y="238" font-size="11" font-weight="600" fill="#7c3aed">AGENT INTERFACE</text>
-  <rect x="220" y="252" width="220" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="330" y="278" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">createPostgresVfsTool()</text>
-  <text x="330" y="296" text-anchor="middle" font-size="12" fill="#6b7280">factory function</text>
+  <!-- LAYER 2: Agent Interface -->
+  <rect x="60" y="150" width="840" height="80" rx="8" ry="8" fill="#faf5ff" stroke="#e9d5ff" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="80" y="166" font-size="10" font-weight="600" fill="#7c3aed">AGENT INTERFACE</text>
+  <rect x="220" y="174" width="200" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="320" y="195" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">createPostgresVfsTool()</text>
+  <text x="320" y="210" text-anchor="middle" font-size="10" fill="#6b7280">factory function</text>
 
-  <rect x="520" y="252" width="220" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="630" y="278" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">executeCommand()</text>
-  <text x="630" y="296" text-anchor="middle" font-size="12" fill="#6b7280">sandbox adapter</text>
+  <rect x="540" y="174" width="200" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="640" y="195" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">executeCommand()</text>
+  <text x="640" y="210" text-anchor="middle" font-size="10" fill="#6b7280">sandbox adapter</text>
 
-  <!-- Arrow within layer 2 -->
-  <line x1="440" y1="280" x2="510" y2="280" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <line x1="420" y1="196" x2="530" y2="196" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <line x1="640" y1="218" x2="640" y2="260" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
 
-  <!-- Arrow down from layer 2 -->
-  <line x1="630" y1="308" x2="630" y2="376" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <!-- LAYER 3: Code -->
+  <rect x="60" y="264" width="840" height="152" rx="8" ry="8" fill="#fff7ed" stroke="#fed7aa" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="80" y="280" font-size="10" font-weight="600" fill="#ea580c">CODE</text>
 
-  <!-- ===== LAYER 3: Code ===== -->
-  <rect x="60" y="384" width="840" height="200" rx="10" ry="10" fill="#fff7ed" stroke="#fed7aa" stroke-width="1" stroke-dasharray="6,3"/>
-  <text x="84" y="404" font-size="11" font-weight="600" fill="#ea580c">CODE</text>
-
-  <!-- just-bash interpreter -->
-  <rect x="420" y="416" width="220" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="530" y="442" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">just-bash</text>
-  <text x="530" y="460" text-anchor="middle" font-size="12" fill="#6b7280">interpreter</text>
+  <!-- just-bash -->
+  <rect x="430" y="288" width="200" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="530" y="309" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">just-bash</text>
+  <text x="530" y="324" text-anchor="middle" font-size="10" fill="#6b7280">interpreter</text>
 
   <!-- PostgresFs -->
-  <rect x="160" y="508" width="220" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="270" y="534" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">PostgresFs</text>
-  <text x="270" y="552" text-anchor="middle" font-size="12" fill="#6b7280">standard ops</text>
+  <rect x="160" y="362" width="200" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="260" y="383" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">PostgresFs</text>
+  <text x="260" y="398" text-anchor="middle" font-size="10" fill="#6b7280">standard ops</text>
 
   <!-- hybridSearch -->
-  <rect x="580" y="508" width="220" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="690" y="534" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">hybridSearch()</text>
-  <text x="690" y="552" text-anchor="middle" font-size="12" fill="#6b7280">custom commands</text>
+  <rect x="600" y="362" width="200" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="700" y="383" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">hybridSearch()</text>
+  <text x="700" y="398" text-anchor="middle" font-size="10" fill="#6b7280">custom commands</text>
 
   <!-- Arrows from just-bash -->
-  <path d="M 470,472 L 470,500 L 330,500 L 330,508" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
-  <rect x="338" y="480" width="90" height="16" rx="3" fill="#ffffff"/>
-  <text x="383" y="492" text-anchor="middle" font-size="10" fill="#6b7280">standard ops</text>
+  <path d="M 475,332 L 475,352 L 320,352 L 320,362" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <rect x="340" y="336" width="76" height="14" rx="3" fill="#ffffff"/>
+  <text x="378" y="347" text-anchor="middle" font-size="9" fill="#6b7280">standard ops</text>
 
-  <path d="M 590,472 L 590,500 L 690,500 L 690,508" stroke="#ea580c" stroke-width="1.5" fill="none" marker-end="url(#arrow-orange)"/>
-  <rect x="610" y="480" width="90" height="16" rx="3" fill="#ffffff"/>
-  <text x="655" y="492" text-anchor="middle" font-size="10" fill="#6b7280">custom cmd</text>
+  <path d="M 585,332 L 585,352 L 700,352 L 700,362" stroke="#ea580c" stroke-width="1.5" fill="none" marker-end="url(#arrow-orange)"/>
+  <rect x="620" y="336" width="76" height="14" rx="3" fill="#ffffff"/>
+  <text x="658" y="347" text-anchor="middle" font-size="9" fill="#6b7280">custom cmd</text>
 
   <!-- DbClient -->
-  <rect x="370" y="600" width="220" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="480" y="626" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">DbClient</text>
-  <text x="480" y="644" text-anchor="middle" font-size="12" fill="#6b7280">postgres.js</text>
+  <rect x="380" y="430" width="200" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="480" y="451" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">DbClient</text>
+  <text x="480" y="466" text-anchor="middle" font-size="10" fill="#6b7280">postgres.js</text>
 
-  <!-- Arrows to DbClient -->
-  <path d="M 270,564 L 270,628 L 370,628" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
-  <path d="M 690,564 L 690,628 L 590,628" stroke="#ea580c" stroke-width="1.5" fill="none" marker-end="url(#arrow-orange)"/>
+  <path d="M 260,406 L 260,452 L 380,452" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 700,406 L 700,452 L 580,452" stroke="#ea580c" stroke-width="1.5" fill="none" marker-end="url(#arrow-orange)"/>
 
-  <!-- Arrow down to persistence -->
-  <line x1="480" y1="656" x2="480" y2="696" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <!-- Arrow to persistence -->
+  <line x1="480" y1="474" x2="480" y2="504" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
 
-  <!-- ===== LAYER 4: Persistence ===== -->
-  <rect x="60" y="700" width="840" height="60" rx="10" ry="10" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1" stroke-dasharray="6,3"/>
-  <text x="84" y="720" font-size="11" font-weight="600" fill="#16a34a">PERSISTENCE</text>
+  <!-- LAYER 4: Persistence -->
+  <rect x="60" y="508" width="840" height="48" rx="8" ry="8" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="80" y="524" font-size="10" font-weight="600" fill="#16a34a">PERSISTENCE</text>
 
   <!-- vfs_files cylinder -->
-  <ellipse cx="480" cy="714" rx="100" ry="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
-  <rect x="380" y="714" width="200" height="24" fill="#dcfce7" stroke="none"/>
-  <line x1="380" y1="714" x2="380" y2="738" stroke="#16a34a" stroke-width="1.5"/>
-  <line x1="580" y1="714" x2="580" y2="738" stroke="#16a34a" stroke-width="1.5"/>
-  <ellipse cx="480" cy="738" rx="100" ry="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
-  <text x="480" y="732" text-anchor="middle" font-size="14" font-weight="600" fill="#166534">vfs_files</text>
+  <ellipse cx="480" cy="520" rx="90" ry="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <rect x="390" y="520" width="180" height="20" fill="#dcfce7" stroke="none"/>
+  <line x1="390" y1="520" x2="390" y2="540" stroke="#16a34a" stroke-width="1.5"/>
+  <line x1="570" y1="520" x2="570" y2="540" stroke="#16a34a" stroke-width="1.5"/>
+  <ellipse cx="480" cy="540" rx="90" ry="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="480" y="536" text-anchor="middle" font-size="13" font-weight="600" fill="#166534">vfs_files</text>
 
-  <!-- Legend — well below persistence layer -->
-  <g transform="translate(340, 796)">
-    <line x1="0" y1="0" x2="28" y2="0" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
-    <text x="34" y="4" font-size="11" fill="#6b7280">Main data flow</text>
-    <line x1="160" y1="0" x2="188" y2="0" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
-    <text x="194" y="4" font-size="11" fill="#6b7280">Custom command flow</text>
+  <!-- Legend -->
+  <g transform="translate(370, 582)">
+    <line x1="0" y1="0" x2="24" y2="0" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <text x="30" y="4" font-size="10" fill="#6b7280">Main data flow</text>
+    <line x1="150" y1="0" x2="174" y2="0" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
+    <text x="180" y="4" font-size="10" fill="#6b7280">Custom command flow</text>
   </g>
 </svg>

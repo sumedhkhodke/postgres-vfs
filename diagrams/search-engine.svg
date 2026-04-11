@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 760" width="960" height="760">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600">
   <style>
     text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
   </style>
@@ -14,92 +14,91 @@
       <polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/>
     </marker>
     <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
-      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000000" flood-opacity="0.06"/>
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.06"/>
     </filter>
   </defs>
 
-  <!-- Background -->
-  <rect width="960" height="760" fill="#ffffff"/>
+  <rect width="960" height="600" fill="#ffffff"/>
 
   <!-- Title -->
-  <text x="480" y="44" text-anchor="middle" font-size="22" font-weight="700" fill="#111827">Hybrid Search Engine</text>
-  <text x="480" y="66" text-anchor="middle" font-size="13" fill="#6b7280">Three-tier parallel search with weighted score fusion</text>
+  <text x="480" y="32" text-anchor="middle" font-size="20" font-weight="700" fill="#111827">Hybrid Search Engine</text>
+  <text x="480" y="50" text-anchor="middle" font-size="12" fill="#6b7280">Three-tier parallel search with weighted score fusion</text>
 
   <!-- Query node -->
-  <rect x="340" y="92" width="280" height="52" rx="10" ry="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5" filter="url(#shadow)"/>
-  <text x="480" y="124" text-anchor="middle" font-size="15" font-weight="600" fill="#1e40af">search &quot;database connection&quot;</text>
+  <rect x="360" y="66" width="240" height="40" rx="10" ry="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5" filter="url(#shadow)"/>
+  <text x="480" y="92" text-anchor="middle" font-size="14" font-weight="600" fill="#1e40af">search &quot;database connection&quot;</text>
 
   <!-- Arrow: query -> embed -->
-  <line x1="480" y1="144" x2="480" y2="184" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
-  <rect x="453" y="154" width="54" height="16" rx="3" fill="#ffffff"/>
-  <text x="480" y="166" text-anchor="middle" font-size="10" fill="#6b7280">embed</text>
+  <line x1="480" y1="106" x2="480" y2="134" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <rect x="456" y="112" width="48" height="14" rx="3" fill="#ffffff"/>
+  <text x="480" y="123" text-anchor="middle" font-size="9" fill="#6b7280">embed</text>
 
   <!-- generateEmbedding -->
-  <rect x="360" y="192" width="240" height="52" rx="8" ry="8" fill="#faf5ff" stroke="#c4b5fd" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="480" y="224" text-anchor="middle" font-size="14" font-weight="600" fill="#5b21b6">generateEmbedding()</text>
+  <rect x="370" y="140" width="220" height="40" rx="8" ry="8" fill="#faf5ff" stroke="#c4b5fd" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="480" y="166" text-anchor="middle" font-size="13" font-weight="600" fill="#5b21b6">generateEmbedding()</text>
 
   <!-- Arrow: embed -> hybrid -->
-  <line x1="480" y1="244" x2="480" y2="284" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <line x1="480" y1="180" x2="480" y2="208" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
 
   <!-- hybridSearch -->
-  <rect x="340" y="292" width="280" height="52" rx="8" ry="8" fill="#ffffff" stroke="#2563eb" stroke-width="2" filter="url(#shadow)"/>
-  <text x="480" y="324" text-anchor="middle" font-size="15" font-weight="600" fill="#1e40af">hybridSearch()</text>
+  <rect x="360" y="214" width="240" height="40" rx="8" ry="8" fill="#ffffff" stroke="#2563eb" stroke-width="2" filter="url(#shadow)"/>
+  <text x="480" y="240" text-anchor="middle" font-size="14" font-weight="600" fill="#1e40af">hybridSearch()</text>
 
-  <!-- Fan-out arrows to 3 search methods -->
-  <path d="M 400,344 L 400,370 L 180,370 L 180,400" stroke="#16a34a" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
-  <line x1="480" y1="344" x2="480" y2="400" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
-  <path d="M 560,344 L 560,370 L 780,370 L 780,400" stroke="#7c3aed" stroke-width="1.5" fill="none" marker-end="url(#arrow-purple)"/>
+  <!-- Fan-out arrows -->
+  <path d="M 410,254 L 410,274 L 180,274 L 180,298" stroke="#16a34a" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <line x1="480" y1="254" x2="480" y2="298" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <path d="M 550,254 L 550,274 L 780,274 L 780,298" stroke="#7c3aed" stroke-width="1.5" fill="none" marker-end="url(#arrow-purple)"/>
 
-  <!-- tsvector FTS -->
-  <rect x="80" y="408" width="200" height="80" rx="8" ry="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="180" y="438" text-anchor="middle" font-size="14" font-weight="600" fill="#166534">tsvector</text>
-  <text x="180" y="458" text-anchor="middle" font-size="11" fill="#6b7280">Full-Text Search</text>
-  <text x="180" y="476" text-anchor="middle" font-size="10" fill="#9ca3af">websearch_to_tsquery</text>
+  <!-- tsvector -->
+  <rect x="80" y="304" width="200" height="68" rx="8" ry="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="180" y="330" text-anchor="middle" font-size="13" font-weight="600" fill="#166534">tsvector</text>
+  <text x="180" y="346" text-anchor="middle" font-size="11" fill="#6b7280">Full-Text Search</text>
+  <text x="180" y="362" text-anchor="middle" font-size="9" fill="#9ca3af">websearch_to_tsquery</text>
 
   <!-- pg_trgm -->
-  <rect x="380" y="408" width="200" height="80" rx="8" ry="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="480" y="438" text-anchor="middle" font-size="14" font-weight="600" fill="#1e40af">pg_trgm</text>
-  <text x="480" y="458" text-anchor="middle" font-size="11" fill="#6b7280">Fuzzy / Regex Match</text>
-  <text x="480" y="476" text-anchor="middle" font-size="10" fill="#9ca3af">similarity &gt; threshold</text>
+  <rect x="380" y="304" width="200" height="68" rx="8" ry="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="480" y="330" text-anchor="middle" font-size="13" font-weight="600" fill="#1e40af">pg_trgm</text>
+  <text x="480" y="346" text-anchor="middle" font-size="11" fill="#6b7280">Fuzzy / Regex Match</text>
+  <text x="480" y="362" text-anchor="middle" font-size="9" fill="#9ca3af">similarity &gt; threshold</text>
 
   <!-- pgvector -->
-  <rect x="680" y="408" width="200" height="80" rx="8" ry="8" fill="#faf5ff" stroke="#c4b5fd" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="780" y="438" text-anchor="middle" font-size="14" font-weight="600" fill="#5b21b6">pgvector</text>
-  <text x="780" y="458" text-anchor="middle" font-size="11" fill="#6b7280">Semantic Similarity</text>
-  <text x="780" y="476" text-anchor="middle" font-size="10" fill="#9ca3af">cosine distance</text>
+  <rect x="680" y="304" width="200" height="68" rx="8" ry="8" fill="#faf5ff" stroke="#c4b5fd" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="780" y="330" text-anchor="middle" font-size="13" font-weight="600" fill="#5b21b6">pgvector</text>
+  <text x="780" y="346" text-anchor="middle" font-size="11" fill="#6b7280">Semantic Similarity</text>
+  <text x="780" y="362" text-anchor="middle" font-size="9" fill="#9ca3af">cosine distance</text>
 
-  <!-- Converge arrows to weighted score -->
-  <path d="M 180,488 L 180,520 L 400,520 L 400,548" stroke="#16a34a" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
-  <path d="M 480,488 L 480,548" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
-  <path d="M 780,488 L 780,520 L 560,520 L 560,548" stroke="#7c3aed" stroke-width="1.5" fill="none" marker-end="url(#arrow-purple)"/>
+  <!-- Converge arrows -->
+  <path d="M 180,372 L 180,400 L 400,400 L 400,424" stroke="#16a34a" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <path d="M 480,372 L 480,424" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 780,372 L 780,400 L 560,400 L 560,424" stroke="#7c3aed" stroke-width="1.5" fill="none" marker-end="url(#arrow-purple)"/>
 
   <!-- Weight labels -->
-  <rect x="155" y="498" width="50" height="16" rx="3" fill="#ffffff"/>
-  <text x="180" y="510" text-anchor="middle" font-size="10" font-weight="600" fill="#16a34a">&#xD7;0.5</text>
-  <rect x="455" y="498" width="50" height="16" rx="3" fill="#ffffff"/>
-  <text x="480" y="510" text-anchor="middle" font-size="10" font-weight="600" fill="#2563eb">&#xD7;0.3</text>
-  <rect x="755" y="498" width="50" height="16" rx="3" fill="#ffffff"/>
-  <text x="780" y="510" text-anchor="middle" font-size="10" font-weight="600" fill="#7c3aed">&#xD7;0.2</text>
+  <rect x="156" y="380" width="48" height="14" rx="3" fill="#ffffff"/>
+  <text x="180" y="391" text-anchor="middle" font-size="10" font-weight="600" fill="#16a34a">&#xD7;0.5</text>
+  <rect x="456" y="380" width="48" height="14" rx="3" fill="#ffffff"/>
+  <text x="480" y="391" text-anchor="middle" font-size="10" font-weight="600" fill="#2563eb">&#xD7;0.3</text>
+  <rect x="756" y="380" width="48" height="14" rx="3" fill="#ffffff"/>
+  <text x="780" y="391" text-anchor="middle" font-size="10" font-weight="600" fill="#7c3aed">&#xD7;0.2</text>
 
   <!-- Weighted Score -->
-  <rect x="330" y="556" width="300" height="52" rx="8" ry="8" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="480" y="580" text-anchor="middle" font-size="14" font-weight="600" fill="#9a3412">Weighted Score</text>
-  <text x="480" y="598" text-anchor="middle" font-size="11" fill="#6b7280">FTS&#xD7;0.5 + trigram&#xD7;0.3 + vector&#xD7;0.2</text>
+  <rect x="340" y="430" width="280" height="44" rx="8" ry="8" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="480" y="450" text-anchor="middle" font-size="13" font-weight="600" fill="#9a3412">Weighted Score</text>
+  <text x="480" y="466" text-anchor="middle" font-size="10" fill="#6b7280">FTS&#xD7;0.5 + trigram&#xD7;0.3 + vector&#xD7;0.2</text>
 
   <!-- Arrow: score -> results -->
-  <line x1="480" y1="608" x2="480" y2="648" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <line x1="480" y1="474" x2="480" y2="504" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
 
   <!-- Ranked Results -->
-  <rect x="340" y="656" width="280" height="44" rx="10" ry="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2" filter="url(#shadow)"/>
-  <text x="480" y="684" text-anchor="middle" font-size="15" font-weight="600" fill="#166534">Ranked Results</text>
+  <rect x="360" y="510" width="240" height="40" rx="10" ry="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2" filter="url(#shadow)"/>
+  <text x="480" y="536" text-anchor="middle" font-size="14" font-weight="600" fill="#166534">Ranked Results</text>
 
-  <!-- Legend — centered, well below results with 40px gap -->
-  <g transform="translate(310, 738)">
+  <!-- Legend -->
+  <g transform="translate(320, 580)">
     <line x1="0" y1="0" x2="24" y2="0" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
     <text x="30" y="4" font-size="10" fill="#6b7280">FTS path</text>
-    <line x1="110" y1="0" x2="134" y2="0" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
-    <text x="140" y="4" font-size="10" fill="#6b7280">Trigram path</text>
-    <line x1="240" y1="0" x2="264" y2="0" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
-    <text x="270" y="4" font-size="10" fill="#6b7280">Vector path</text>
+    <line x1="100" y1="0" x2="124" y2="0" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <text x="130" y="4" font-size="10" fill="#6b7280">Trigram path</text>
+    <line x1="220" y1="0" x2="244" y2="0" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+    <text x="250" y="4" font-size="10" fill="#6b7280">Vector path</text>
   </g>
 </svg>
