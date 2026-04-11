@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" width="960" height="700">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 740" width="960" height="740">
   <style>
     text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
   </style>
@@ -19,7 +19,7 @@
   </defs>
 
   <!-- Background -->
-  <rect width="960" height="700" fill="#ffffff"/>
+  <rect width="960" height="740" fill="#ffffff"/>
 
   <!-- Title -->
   <text x="480" y="44" text-anchor="middle" font-size="22" font-weight="700" fill="#111827">Hybrid Search Engine</text>
@@ -97,12 +97,12 @@
   <text x="480" y="672" text-anchor="middle" font-size="15" font-weight="600" fill="#166534">Ranked Results</text>
 
   <!-- Legend -->
-  <g transform="translate(64, 694)">
-    <line x1="0" y1="-8" x2="24" y2="-8" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
-    <text x="30" y="-4" font-size="10" fill="#6b7280">FTS path</text>
-    <line x1="110" y1="-8" x2="134" y2="-8" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
-    <text x="140" y="-4" font-size="10" fill="#6b7280">Trigram path</text>
-    <line x1="240" y1="-8" x2="264" y2="-8" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
-    <text x="270" y="-4" font-size="10" fill="#6b7280">Vector path</text>
+  <g transform="translate(64, 720)">
+    <line x1="0" y1="0" x2="24" y2="0" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+    <text x="30" y="4" font-size="10" fill="#6b7280">FTS path</text>
+    <line x1="110" y1="0" x2="134" y2="0" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <text x="140" y="4" font-size="10" fill="#6b7280">Trigram path</text>
+    <line x1="240" y1="0" x2="264" y2="0" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+    <text x="270" y="4" font-size="10" fill="#6b7280">Vector path</text>
   </g>
 </svg>
