@@ -20,7 +20,7 @@ Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash
 
 ---
 
-## Why do we `postgres-vfs`?
+## Why do we need `postgres-vfs`?
 
 Modern LLMs are fluent in shell. They've ingested enormous amounts of `grep`, `find`, `cat`, `sed`, and `awk` during training, which makes a bash tool over a filesystem a surprisingly high-leverage interface for *non-coding* agents too (email, sales, support, docs). `grep` returns exact matches. Directories map to real data hierarchies. Agents load only the context they need, when they need it. See [this note](https://x.com/trq212/status/1982869394482139206) on how swapping custom tools for bash + filesystem cut cost and improved output in production (part of the broader MCP-vs-CLI_with_fs conversation).
 
