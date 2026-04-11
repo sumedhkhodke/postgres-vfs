@@ -109,31 +109,35 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
     if (route === "/file" && req.method === "DELETE") {
       const path = url.searchParams.get("path");
       if (!path) return err("path required");
+      const normalized = normalizePath(path);
       const fs = await getFs(tenant);
-      const st = await fs.stat(path);
-      await fs.rm(path, { recursive: st.isDirectory, force: true });
+      const st = await fs.stat(normalized);
+      await fs.rm(normalized, { recursive: st.isDirectory, force: true });
       fsCache.delete(tenant);
-      return json({ ok: true, path: normalizePath(path) });
+      return json({ ok: true, path: normalized });
     }
 
     if (route === "/mkdir" && req.method === "POST") {
       const body = (await req.json()) as { tenant?: string; path?: string };
       const t = resolveTenant(tenant, body.tenant);
       if (!body.path) return err("path required");
+      const normalized = normalizePath(body.path);
       const fs = await getFs(t);
-      await fs.mkdir(body.path, { recursive: true });
+      await fs.mkdir(normalized, { recursive: true });
       fsCache.delete(t);
-      return json({ ok: true, path: normalizePath(body.path) });
+      return json({ ok: true, path: normalized });
     }
 
     if (route === "/rename" && req.method === "POST") {
       const body = (await req.json()) as { tenant?: string; oldPath?: string; newPath?: string };
       const t = resolveTenant(tenant, body.tenant);
       if (!body.oldPath || !body.newPath) return err("oldPath and newPath required");
+      const normalizedOld = normalizePath(body.oldPath);
+      const normalizedNew = normalizePath(body.newPath);
       const fs = await getFs(t);
-      await fs.mv(body.oldPath, body.newPath);
+      await fs.mv(normalizedOld, normalizedNew);
       fsCache.delete(t);
-      return json({ ok: true, oldPath: normalizePath(body.oldPath), newPath: normalizePath(body.newPath) });
+      return json({ ok: true, oldPath: normalizedOld, newPath: normalizedNew });
     }
 
     if (route === "/search" && req.method === "GET") {
@@ -177,10 +181,19 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
   } catch (e) {
     const code = (e as NodeJS.ErrnoException).code;
     const status = (code ? FS_ERROR_STATUS[code] : undefined) ?? 500;
+    console.error("[api]", errorMessage(e));
     if (status === 500) {
-      console.error("[api]", errorMessage(e));
       return err("Something went wrong. Please try again later.", 500);
     }
-    return err(errorMessage(e), status);
+    const userMessages: Record<string, string> = {
+      ENOENT: "File or directory not found.",
+      EEXIST: "File or directory already exists.",
+      EISDIR: "Path is a directory.",
+      ENOTDIR: "Path is not a directory.",
+      ENOTEMPTY: "Directory is not empty.",
+      EINVAL: "Invalid argument.",
+      EACCES: "Permission denied.",
+    };
+    return err(userMessages[code!] ?? "Operation failed.", status);
   }
 }
