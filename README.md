@@ -6,13 +6,16 @@
 
 [![CI](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml/badge.svg)](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sumedhkhodke/postgres-vfs) [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.0-000000?style=flat&logo=bun&logoColor=white)](https://bun.sh) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%E2%89%A514-316192?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/) [![pgvector](https://img.shields.io/badge/pgvector-optional-4169E1?style=flat&logo=databricks&logoColor=white)](https://github.com/pgvector/pgvector) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat&logo=opensourceinitiative&logoColor=white)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat)](#contributing) [![GitHub last commit](https://img.shields.io/github/last-commit/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/commits/main) [![GitHub issues](https://img.shields.io/github/issues/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/issues) [![Star History](https://img.shields.io/github/stars/sumedhkhodke/postgres-vfs?style=flat&logo=github&label=Stars)](https://github.com/sumedhkhodke/postgres-vfs/stargazers)
 
-**A PostgreSQL-backed virtual filesystem for AI agents.**
+**A virtual filesystem using PostgreSQL for AI agents.**
+
+**See demo: [postgres-vfs.com](https://postgres-vfs.com)**
 
 </div>
 
+
 A PostgreSQL-backed virtual filesystem for AI agents. Agents run `cat`, `ls`, `grep`, `find`, `mkdir`, `rm`, and 70+ other Unix commands against a persistent, multi-tenant workspace and all data lives in Postgres.
 
-Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash interpreter, with a custom `IFileSystem` that compiles every filesystem call into SQL. Inspired by [ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) that can read-write and is Postgres-native.
+Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash interpreter, with a custom `IFileSystem` that compiles every filesystem call into SQL. Inspired by [ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) but it can also read-write and is Postgres-native.
 
 <p align="center"><img src="diagrams/demo.gif" width="760" alt="Terminal demo: an AI agent queries meeting files via bash-tool, using find and grep to locate deadlines across a Postgres-backed virtual filesystem"></p>
 
