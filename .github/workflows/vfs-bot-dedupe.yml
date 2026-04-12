@@ -61,18 +61,18 @@ jobs:
           If your issue is a duplicate, please close it and upvote the existing issue instead.
 
           ---
-          postgres-vfs-bot | Type `@postgres-vfs-bot` to interact further
+          mister-meow | Type `@mister-meow` to interact further
           PROMPT_END
           EOF
 
       - name: Clean up stale lock files
         run: rm -rf ~/.claude/.locks ~/.local/state/claude/locks || true
 
-      - name: Run postgres-vfs-bot for Dedupe
+      - name: Run mister-meow for Dedupe
         uses: anthropics/claude-code-action@v1
         with:
           github_token: ${{ steps.bot-token.outputs.token }}
-          bot_name: "postgres-vfs-bot"
+          bot_name: "mister-meow"
           prompt: ${{ steps.dedupe-prompt.outputs.PROMPT }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: |

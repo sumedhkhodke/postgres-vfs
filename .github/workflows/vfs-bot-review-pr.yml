@@ -37,7 +37,7 @@ jobs:
           HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" --jq '.head.sha')
           echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
 
-      - name: Run postgres-vfs-bot for PR Review
+      - name: Run mister-meow for PR Review
         uses: ./.github/actions/run-claude
         env:
           PR_REVIEW_REPO: ${{ github.repository }}
@@ -123,5 +123,5 @@ jobs:
             Always end your comment with:
 
             ---
-            postgres-vfs-bot | Type `@postgres-vfs-bot` to interact further
+            mister-meow | Type `@mister-meow` to interact further
             </response_footer>

@@ -1,5 +1,5 @@
 name: "Run Bot"
-description: "Run postgres-vfs-bot with standard configuration"
+description: "Run mister-meow with standard configuration"
 author: "postgres-vfs"
 
 branding:
@@ -37,7 +37,7 @@ inputs:
   trigger-phrase:
     description: "Trigger phrase for mention workflows"
     required: false
-    default: "@postgres-vfs-bot"
+    default: "@mister-meow"
 
 outputs:
   conclusion:
@@ -51,7 +51,7 @@ runs:
       shell: bash
       run: rm -rf ~/.claude/.locks ~/.local/state/claude/locks || true
 
-    - name: Run postgres-vfs-bot
+    - name: Run mister-meow
       id: claude
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
@@ -59,7 +59,7 @@ runs:
       with:
         github_token: ${{ inputs.github-token }}
         claude_code_oauth_token: ${{ inputs.oauth-token }}
-        bot_name: "postgres-vfs-bot"
+        bot_name: "mister-meow"
         trigger_phrase: ${{ inputs.trigger-phrase }}
         allowed_bots: ${{ inputs.allowed-bots }}
         prompt: ${{ inputs.prompt }}
