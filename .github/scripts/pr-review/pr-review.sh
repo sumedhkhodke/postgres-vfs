@@ -51,7 +51,7 @@ fi
 FOOTER='
 
 ---
-postgres-vfs-bot | Type `/postgres-vfs-bot` to interact further'
+mister-meow | Type `@mister-meow` to interact further'
 
 if [ -n "$BODY" ]; then
   BODY_WITH_FOOTER="${BODY}${FOOTER}"
