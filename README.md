@@ -10,7 +10,7 @@
 
 **Try the interactive demo: [postgres-vfs.com](https://postgres-vfs.com)**
 
-<video src="https://github.com/sumedhkhodke/postgres-vfs/raw/main/diagrams/demo-video.mp4" width="760" autoplay loop muted playsinline></video>
+<img src="diagrams/demo-video.gif" width="760" alt="postgres-vfs demo: running ls, cat, find, grep, and search commands against a PostgreSQL-backed virtual filesystem">
 
 </div>
 
