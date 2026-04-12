@@ -11,7 +11,7 @@
 **Try the interactive demo: [postgres-vfs.com](https://postgres-vfs.com)**
 
 <img src="diagrams/demo-video.gif" width="760" alt="postgres-vfs demo: running ls, cat, find, grep, and search commands against a PostgreSQL-backed virtual filesystem">
-<br><em>Web UI: browsing, editing, and searching files in the virtual filesystem</em>
+<br><em>Interactive demo of a browser terminal hooked to postgres-vfs, session-scoped tenant</em>
 
 </div>
 
