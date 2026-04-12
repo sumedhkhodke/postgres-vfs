@@ -8,7 +8,9 @@
 
 **A virtual filesystem using PostgreSQL for AI agents.**
 
-**See demo: [postgres-vfs.com](https://postgres-vfs.com)**
+**Try the interactive demo: [postgres-vfs.com](https://postgres-vfs.com)**
+
+<video src="https://github.com/sumedhkhodke/postgres-vfs/raw/main/diagrams/demo-video.mp4" width="760" autoplay loop muted playsinline></video>
 
 </div>
 
