@@ -8,7 +8,10 @@
 
 **A virtual filesystem using PostgreSQL for AI agents.**
 
-**See demo: [postgres-vfs.com](https://postgres-vfs.com)**
+**Try the interactive demo: [postgres-vfs.com](https://postgres-vfs.com)**
+
+<img src="diagrams/demo-video.gif" width="760" alt="postgres-vfs demo: running ls, cat, find, grep, and search commands against a PostgreSQL-backed virtual filesystem">
+<br><em>Interactive demo of a browser terminal hooked to postgres-vfs, session-scoped tenant</em>
 
 </div>
 
@@ -17,11 +20,11 @@ A PostgreSQL-backed virtual filesystem for AI agents. Agents run `cat`, `ls`, `g
 
 Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash interpreter, with a custom `IFileSystem` that compiles every filesystem call into SQL. Inspired by [ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) but it can also read-write and is Postgres-native.
 
-<p align="center"><img src="diagrams/demo.gif" width="760" alt="Terminal demo: an AI agent queries meeting files via bash-tool, using find and grep to locate deadlines across a Postgres-backed virtual filesystem"></p>
+<p align="center"><img src="diagrams/demo.gif" width="760" alt="Terminal demo: an AI agent queries meeting files via bash-tool, using find and grep to locate deadlines across a Postgres-backed virtual filesystem"><br><em>AI agent using bash to run `find` and `grep` over the virtual filesystem</em></p>
 
-<p align="center"><img src="diagrams/db-rows-filesystem.png" width="760" alt="pgAdmin showing vfs_files table rows: directories and markdown files stored as database rows with tenant isolation"></p>
+<p align="center"><img src="diagrams/db-rows-filesystem.png" width="760" alt="pgAdmin showing vfs_files table rows: directories and markdown files stored as database rows with tenant isolation"><br><em>Files and directories stored as rows in a single Postgres table, per tenant</em></p>
 
-<p align="center"><a id="ui-screenshot"></a><img src="diagrams/ui-screenshot.png" width="760" alt="postgres-vfs Web UI showing the three-column layout: file tree on the left, markdown editor in the middle, and file details on the right."></p>
+<p align="center"><a id="ui-screenshot"></a><img src="diagrams/ui-screenshot.png" width="760" alt="postgres-vfs Web UI showing the three-column layout: file tree on the left, markdown editor in the middle, and file details on the right."><br><em>Built-in Web UI with file tree, editor, and metadata panel</em></p>
 
 ---
 
