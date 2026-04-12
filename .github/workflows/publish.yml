@@ -58,7 +58,10 @@ jobs:
         with:
           node-version: "22"
           registry-url: "https://npm.pkg.github.com"
+          scope: "@sumedhkhodke"
 
-      - run: npm publish --access public
+      - run: |
+          npm pkg set "name=@sumedhkhodke/postgres-vfs"
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -8,7 +8,6 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  id-token: write
 
 jobs:
   describe:
@@ -64,6 +63,7 @@ jobs:
           GH_TOKEN: ${{ steps.bot-token.outputs.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           DIFF=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/files" --paginate \
             --jq '.[] | "## \(.filename) (+\(.additions)/-\(.deletions))\n\(.patch // "")\n"')
@@ -71,12 +71,10 @@ jobs:
           COMMITS=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/commits" \
             --jq '.[] | "- \(.commit.message | split("\n") | .[0])"')
 
-          TITLE="${{ github.event.pull_request.title }}"
-
           DESCRIPTION=$(cat <<EOF
           Based on these commits and diff, write a concise PR description.
 
-          PR Title: ${TITLE}
+          PR Title: ${PR_TITLE}
 
           Commits:
           ${COMMITS}
@@ -86,7 +84,6 @@ jobs:
           EOF
           )
 
-          # Truncate if too large for the API
           DESCRIPTION="${DESCRIPTION:0:60000}"
 
           echo "$DESCRIPTION" > /tmp/pr-context.txt
