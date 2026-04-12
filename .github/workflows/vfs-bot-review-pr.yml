@@ -2,7 +2,7 @@ name: VFS Bot - Review PR
 
 on:
   pull_request:
-    types: [opened]
+    types: [opened, ready_for_review]
     branches: [main]
 
 permissions:
@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   review:
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
