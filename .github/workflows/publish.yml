@@ -7,10 +7,28 @@ on:
 permissions:
   contents: read
   id-token: write
+  packages: write
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: postgres_vfs
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres_vfs
 
     steps:
       - uses: actions/checkout@v6
@@ -28,10 +46,22 @@ jobs:
 
       - run: bun run build
 
+      - run: bun run migrate
+
       - run: bun test
-        env:
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
 
       - run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@sumedhkhodke"
+
+      - run: |
+          npm pkg set "name=@sumedhkhodke/postgres-vfs"
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
