@@ -1,0 +1,8 @@
+---
+description: Always confirm with the user before pushing commits to a remote
+alwaysApply: true
+---
+
+# Git Push Confirmation
+
+Never run `git push` (or any variant like `git push origin`, `git push -u`, etc.) without explicitly asking the user for confirmation first. Always show what will be pushed (branch, commits) and wait for approval before executing the push.

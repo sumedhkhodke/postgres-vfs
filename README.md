@@ -4,7 +4,7 @@
 
 # postgres-vfs
 
-[![CI](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml/badge.svg)](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sumedhkhodke/postgres-vfs) [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.0-000000?style=flat&logo=bun&logoColor=white)](https://bun.sh) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%E2%89%A514-316192?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/) [![pgvector](https://img.shields.io/badge/pgvector-optional-4169E1?style=flat&logo=databricks&logoColor=white)](https://github.com/pgvector/pgvector) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat&logo=opensourceinitiative&logoColor=white)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat)](#contributing) [![GitHub last commit](https://img.shields.io/github/last-commit/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/commits/main) [![GitHub issues](https://img.shields.io/github/issues/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/issues) [![Star History](https://img.shields.io/github/stars/sumedhkhodke/postgres-vfs?style=flat&logo=github&label=Stars)](https://github.com/sumedhkhodke/postgres-vfs/stargazers)
+[![npm](https://img.shields.io/npm/v/postgres-vfs?style=flat&logo=npm&logoColor=white)](https://www.npmjs.com/package/postgres-vfs) [![CI](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml/badge.svg)](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sumedhkhodke/postgres-vfs) [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.0-000000?style=flat&logo=bun&logoColor=white)](https://bun.sh) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%E2%89%A514-316192?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/) [![pgvector](https://img.shields.io/badge/pgvector-optional-4169E1?style=flat&logo=databricks&logoColor=white)](https://github.com/pgvector/pgvector) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat&logo=opensourceinitiative&logoColor=white)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat)](#contributing) [![GitHub last commit](https://img.shields.io/github/last-commit/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/commits/main) [![GitHub issues](https://img.shields.io/github/issues/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/issues) [![Star History](https://img.shields.io/github/stars/sumedhkhodke/postgres-vfs?style=flat&logo=github&label=Stars)](https://github.com/sumedhkhodke/postgres-vfs/stargazers)
 
 **A virtual filesystem using PostgreSQL for AI agents.**
 
@@ -93,7 +93,53 @@ But a real filesystem is a poor production substrate for agents:
 
 ## 1. Getting Started
 
-Install Bun, start a Postgres instance with the right extensions, and run the migrations.
+### Install
+
+```bash
+bun add postgres-vfs # recommended
+# or
+npm install postgres-vfs
+```
+
+The package is ESM-only and ships with TypeScript declarations. Requires Node.js >= 18 or Bun >= 1.0.
+
+### Quick usage
+
+```typescript
+import { createClient, createPostgresVfsTool } from "postgres-vfs";
+import { streamText } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
+
+const sql = createClient("postgres://postgres:postgres@localhost:5432/postgres_vfs");
+
+const { tools, sandbox } = await createPostgresVfsTool({
+  sql,
+  tenantId: "my-agent",
+});
+
+// Pre-load files for the agent
+await sandbox.writeFiles([
+  { path: "/docs/readme.md", content: "# Hello World" },
+]);
+
+// Agent can now use bash, readFile, writeFile tools
+const result = streamText({
+  model: anthropic("claude-sonnet-4.5"),
+  tools,
+  maxSteps: 10,
+  prompt: "List all files in /docs and summarize them",
+});
+
+for await (const part of result.textStream) {
+  process.stdout.write(part);
+}
+```
+
+Custom shell commands (search, tag, recent, etc.) are available as a subpath export:
+
+```typescript
+import { createCustomCommands } from "postgres-vfs/commands";
+```
 
 ### Prerequisites
 
