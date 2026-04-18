@@ -65,7 +65,12 @@ export async function grepFiles(
 
   // Stage 2: Fine filter — precise regex matching with line numbers
   const results: GrepResult[] = [];
-  const regex = new RegExp(pattern, flags);
+  let regex: RegExp;
+  try {
+    regex = new RegExp(pattern, flags);
+  } catch {
+    throw Object.assign(new Error(`invalid regex pattern: ${pattern}`), { code: "EINVAL" });
+  }
 
   for (const row of rows) {
     const content = row.content as string;

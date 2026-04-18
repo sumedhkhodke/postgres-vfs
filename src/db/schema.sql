@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS vfs_symlinks (
   path        TEXT NOT NULL,
   target      TEXT NOT NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(tenant_id, path)
 );
 
@@ -54,6 +55,10 @@ CREATE INDEX IF NOT EXISTS idx_vfs_dir ON vfs_files (tenant_id, is_dir) WHERE is
 -- Symlink lookup
 CREATE INDEX IF NOT EXISTS idx_vfs_symlinks ON vfs_symlinks (tenant_id, path text_pattern_ops);
 
+-- Backfill updated_at for existing vfs_symlinks tables (idempotent)
+ALTER TABLE vfs_symlinks
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
 -- Updated_at trigger for automatic timestamp
 CREATE OR REPLACE FUNCTION vfs_update_timestamp()
 RETURNS TRIGGER AS $$
@@ -68,5 +73,7 @@ CREATE TRIGGER vfs_files_updated_at
   BEFORE UPDATE ON vfs_files
   FOR EACH ROW EXECUTE FUNCTION vfs_update_timestamp();
 
--- vfs_symlinks has no updated_at column; ensure no stale trigger exists
 DROP TRIGGER IF EXISTS vfs_symlinks_updated_at ON vfs_symlinks;
+CREATE TRIGGER vfs_symlinks_updated_at
+  BEFORE UPDATE ON vfs_symlinks
+  FOR EACH ROW EXECUTE FUNCTION vfs_update_timestamp();
