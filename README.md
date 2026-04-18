@@ -4,21 +4,27 @@
 
 # postgres-vfs
 
-[![CI](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml/badge.svg)](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sumedhkhodke/postgres-vfs) [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.0-000000?style=flat&logo=bun&logoColor=white)](https://bun.sh) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%E2%89%A514-316192?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/) [![pgvector](https://img.shields.io/badge/pgvector-optional-4169E1?style=flat&logo=databricks&logoColor=white)](https://github.com/pgvector/pgvector) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat&logo=opensourceinitiative&logoColor=white)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat)](#contributing) [![GitHub last commit](https://img.shields.io/github/last-commit/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/commits/main) [![GitHub issues](https://img.shields.io/github/issues/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/issues) [![Star History](https://img.shields.io/github/stars/sumedhkhodke/postgres-vfs?style=flat&logo=github&label=Stars)](https://github.com/sumedhkhodke/postgres-vfs/stargazers)
+[![npm](https://img.shields.io/npm/v/postgres-vfs?style=flat&logo=npm&logoColor=white)](https://www.npmjs.com/package/postgres-vfs) [![CI](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml/badge.svg)](https://github.com/sumedhkhodke/postgres-vfs/actions/workflows/ci.yml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sumedhkhodke/postgres-vfs) [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Bun](https://img.shields.io/badge/Bun-%E2%89%A51.0-000000?style=flat&logo=bun&logoColor=white)](https://bun.sh) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%E2%89%A514-316192?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/) [![pgvector](https://img.shields.io/badge/pgvector-optional-4169E1?style=flat&logo=databricks&logoColor=white)](https://github.com/pgvector/pgvector) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat&logo=opensourceinitiative&logoColor=white)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat)](#contributing) [![GitHub last commit](https://img.shields.io/github/last-commit/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/commits/main) [![GitHub issues](https://img.shields.io/github/issues/sumedhkhodke/postgres-vfs?style=flat)](https://github.com/sumedhkhodke/postgres-vfs/issues) [![Star History](https://img.shields.io/github/stars/sumedhkhodke/postgres-vfs?style=flat&logo=github&label=Stars)](https://github.com/sumedhkhodke/postgres-vfs/stargazers)
 
-**A PostgreSQL-backed virtual filesystem for AI agents.**
+**A virtual filesystem using PostgreSQL for AI agents.**
+
+**Try the interactive demo: [postgres-vfs.com](https://postgres-vfs.com)**
+
+<img src="diagrams/demo-video.gif" width="760" alt="postgres-vfs demo: running ls, cat, find, grep, and search commands against a PostgreSQL-backed virtual filesystem">
+<br><em>Interactive demo of a browser terminal hooked to postgres-vfs, session-scoped tenant</em>
 
 </div>
 
+
 A PostgreSQL-backed virtual filesystem for AI agents. Agents run `cat`, `ls`, `grep`, `find`, `mkdir`, `rm`, and 70+ other Unix commands against a persistent, multi-tenant workspace and all data lives in Postgres.
 
-Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash interpreter, with a custom `IFileSystem` that compiles every filesystem call into SQL. Inspired by [ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) that can read-write and is Postgres-native.
+Built on [just-bash](https://github.com/vercel-labs/just-bash) a TypeScript bash interpreter, with a custom `IFileSystem` that compiles every filesystem call into SQL. Inspired by [ChromaFs](https://www.mintlify.com/blog/how-we-built-a-virtual-filesystem-for-our-assistant) but it can also read-write and is Postgres-native.
 
-<p align="center"><img src="diagrams/demo.gif" width="760" alt="Terminal demo: an AI agent queries meeting files via bash-tool, using find and grep to locate deadlines across a Postgres-backed virtual filesystem"></p>
+<p align="center"><img src="diagrams/demo.gif" width="760" alt="Terminal demo: an AI agent queries meeting files via bash-tool, using find and grep to locate deadlines across a Postgres-backed virtual filesystem"><br><em>AI agent using bash to run `find` and `grep` over the virtual filesystem</em></p>
 
-<p align="center"><img src="diagrams/db-rows-filesystem.png" width="760" alt="pgAdmin showing vfs_files table rows: directories and markdown files stored as database rows with tenant isolation"></p>
+<p align="center"><img src="diagrams/db-rows-filesystem.png" width="760" alt="pgAdmin showing vfs_files table rows: directories and markdown files stored as database rows with tenant isolation"><br><em>Files and directories stored as rows in a single Postgres table, per tenant</em></p>
 
-<p align="center"><a id="ui-screenshot"></a><img src="diagrams/ui-screenshot.png" width="760" alt="postgres-vfs Web UI showing the three-column layout: file tree on the left, markdown editor in the middle, and file details on the right."></p>
+<p align="center"><a id="ui-screenshot"></a><img src="diagrams/ui-screenshot.png" width="760" alt="postgres-vfs Web UI showing the three-column layout: file tree on the left, markdown editor in the middle, and file details on the right."><br><em>Built-in Web UI with file tree, editor, and metadata panel</em></p>
 
 ---
 
@@ -90,7 +96,53 @@ But a real filesystem is a poor production substrate for agents:
 
 ## 1. Getting Started
 
-Install Bun, start a Postgres instance with the right extensions, and run the migrations.
+### Install
+
+```bash
+bun add postgres-vfs # recommended
+# or
+npm install postgres-vfs
+```
+
+The package is ESM-only and ships with TypeScript declarations. Requires Node.js >= 18 or Bun >= 1.0.
+
+### Quick usage
+
+```typescript
+import { createClient, createPostgresVfsTool } from "postgres-vfs";
+import { streamText } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
+
+const sql = createClient("postgres://postgres:postgres@localhost:5432/postgres_vfs");
+
+const { tools, sandbox } = await createPostgresVfsTool({
+  sql,
+  tenantId: "my-agent",
+});
+
+// Pre-load files for the agent
+await sandbox.writeFiles([
+  { path: "/docs/readme.md", content: "# Hello World" },
+]);
+
+// Agent can now use bash, readFile, writeFile tools
+const result = streamText({
+  model: anthropic("claude-sonnet-4.5"),
+  tools,
+  maxSteps: 10,
+  prompt: "List all files in /docs and summarize them",
+});
+
+for await (const part of result.textStream) {
+  process.stdout.write(part);
+}
+```
+
+Custom shell commands (search, tag, recent, etc.) are available as a subpath export:
+
+```typescript
+import { createCustomCommands } from "postgres-vfs/commands";
+```
 
 ### Prerequisites
 

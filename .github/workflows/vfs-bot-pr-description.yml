@@ -1,0 +1,122 @@
+name: VFS Bot - PR Description
+
+on:
+  pull_request:
+    types: [opened]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  describe:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check if PR body is empty
+        id: check-body
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          STRIPPED=$(echo "$PR_BODY" | sed -e 's/<!--.*-->//g' \
+            -e 's/^## Related issue//' \
+            -e 's/^Closes #//' \
+            -e 's/^## What//' \
+            -e 's/^Brief description of the change\.//' \
+            -e 's/^## Why//' \
+            -e 's/^What problem does this solve or what feature does it add?//' \
+            -e 's/^## How//' \
+            -e 's/^Key implementation details, if non-obvious\.//' \
+            -e 's/^## Checklist//' \
+            -e 's/^- \[ \] Tests pass (`bun test`)//' \
+            -e 's/^- \[ \] New behavior has tests//' \
+            -e 's/^- \[ \] README or docs updated (if applicable)//' \
+            -e '/^[[:space:]]*$/d')
+
+          if [ -z "$STRIPPED" ]; then
+            echo "empty=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "empty=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout PR
+        if: steps.check-body.outputs.empty == 'true'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Generate vfs-bot token
+        if: steps.check-body.outputs.empty == 'true'
+        id: bot-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.VFS_BOT_APP_ID }}
+          private-key: ${{ secrets.VFS_BOT_APP_PRIVATE_KEY }}
+
+      - name: Generate PR description
+        if: steps.check-body.outputs.empty == 'true'
+        env:
+          GH_TOKEN: ${{ steps.bot-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          DIFF=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/files" --paginate \
+            --jq '.[] | "## \(.filename) (+\(.additions)/-\(.deletions))\n\(.patch // "")\n"')
+
+          COMMITS=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/commits" \
+            --jq '.[] | "- \(.commit.message | split("\n") | .[0])"')
+
+          DESCRIPTION=$(cat <<EOF
+          Based on these commits and diff, write a concise PR description.
+
+          PR Title: ${PR_TITLE}
+
+          Commits:
+          ${COMMITS}
+
+          Diff:
+          ${DIFF}
+          EOF
+          )
+
+          DESCRIPTION="${DESCRIPTION:0:60000}"
+
+          echo "$DESCRIPTION" > /tmp/pr-context.txt
+
+      - name: Run postgres-vfs-bot for PR Description
+        if: steps.check-body.outputs.empty == 'true'
+        uses: ./.github/actions/run-claude
+        with:
+          oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github-token: ${{ steps.bot-token.outputs.token }}
+          allowed-tools: "Glob,Grep,LS,Read,Bash(gh pr edit *),Bash(cat /tmp/pr-context.txt)"
+          prompt: |
+            <context>
+            Repository: ${{ github.repository }}
+            PR Number: #${{ github.event.pull_request.number }}
+            PR Title: ${{ github.event.pull_request.title }}
+            PR Author: ${{ github.event.pull_request.user.login }}
+            </context>
+
+            <task>
+            This PR has no description. Read `cat /tmp/pr-context.txt` for the diff and commits, then set a body with `gh pr edit ${{ github.event.pull_request.number }} --body "<description>"`.
+            </task>
+
+            <format>
+            Write a bullet-point summary of the high-level changes. No prose, no headings, no sections — just bullets. Example:
+
+            - Add retry logic to the upload endpoint
+            - Bump postgres driver to v3.4
+            - Fix off-by-one in pagination offset
+            </format>
+
+            <constraints>
+            - Max 10 bullets; each bullet is one plain-language sentence
+            - Cover only what changed at a high level — skip file names, line numbers, and implementation details unless they are relevant to the change
+            - Do NOT post a PR comment — only edit the PR body
+            </constraints>

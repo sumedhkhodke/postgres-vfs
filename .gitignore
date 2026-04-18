@@ -4,6 +4,7 @@ dist/
 *.log
 .DS_Store
 .claude/
+.cursor/
 .idea/
 .vscode/
 *.swp

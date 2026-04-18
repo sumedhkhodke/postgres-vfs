@@ -1,15 +1,40 @@
 {
   "name": "postgres-vfs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Virtual filesystem for AI agents backed by PostgreSQL — ChromaFs-equivalent using just-bash",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./commands": {
+      "types": "./dist/commands/index.d.ts",
+      "import": "./dist/commands/index.js",
+      "default": "./dist/commands/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sumedhkhodke/postgres-vfs.git"
+  },
+  "keywords": ["postgres", "virtual-filesystem", "ai-agents", "pgvector", "embeddings"],
   "scripts": {
     "migrate": "bun run src/db/migrate.ts",
     "test": "bun test",
     "ui": "bun run src/ui/server.ts",
-    "build": "bun build src/index.ts --outdir dist --target node"
+    "build": "rm -rf dist && tsc",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.86.1",
@@ -20,6 +45,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/node": "^25.6.0",
     "typescript": "^5.7.0"
   },
   "peerDependencies": {
