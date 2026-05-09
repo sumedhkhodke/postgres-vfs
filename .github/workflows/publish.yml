@@ -42,6 +42,17 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
+      # Sync package.json version to the release tag so we don't accidentally
+      # republish whatever's on main. Without this, forgetting to bump
+      # package.json before tagging causes `npm publish` to retry the previous
+      # version and fail with 403 "cannot publish over previously published".
+      - name: Sync package.json version from release tag
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+          npm pkg set version="${VERSION}"
+          echo "package.json version set to ${VERSION} (from tag ${TAG})"
+
       - run: bun install
 
       - run: bun run build
