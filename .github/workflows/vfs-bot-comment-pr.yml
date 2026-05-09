@@ -15,7 +15,10 @@ jobs:
     if: |
       github.event.issue.pull_request &&
       contains(github.event.comment.body, '@mister-meow') &&
-      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+      (
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR", "FIRST_TIME_CONTRIBUTOR"]'), github.event.comment.author_association) ||
+        github.event.comment.user.login == github.event.issue.user.login
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -32,7 +35,43 @@ jobs:
           client-id: ${{ secrets.VFS_BOT_APP_ID }}
           private-key: ${{ secrets.VFS_BOT_APP_PRIVATE_KEY }}
 
+      - name: Check daily mention cap for external users
+        id: rate-check
+        if: ${{ !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) }}
+        env:
+          GH_TOKEN: ${{ steps.bot-token.outputs.token }}
+          USER_LOGIN: ${{ github.event.comment.user.login }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          DAILY_CAP: "5"
+        run: |
+          SINCE=$(date -u -d '24 hours ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null \
+            || date -u -v-24H '+%Y-%m-%dT%H:%M:%SZ')
+
+          COUNT=$(gh api -X GET "repos/${REPO}/issues/comments" \
+            -f since="${SINCE}" -f per_page=100 --paginate \
+            --jq "[.[] | select(.user.login == \"${USER_LOGIN}\" and (.body | contains(\"@mister-meow\")))] | length")
+
+          echo "count=${COUNT}" >> "$GITHUB_OUTPUT"
+
+          if [ "${COUNT}" -gt "${DAILY_CAP}" ]; then
+            echo "exceeded=true" >> "$GITHUB_OUTPUT"
+
+            ALREADY_NOTIFIED=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+              --jq "[.[] | select(.user.type == \"Bot\" and (.body | contains(\"daily mention limit\")) and .created_at >= \"${SINCE}\")] | length")
+
+            if [ "${ALREADY_NOTIFIED}" -eq 0 ]; then
+              gh issue comment "${PR_NUMBER}" -R "${REPO}" --body "@${USER_LOGIN} you've hit the daily mention limit (${DAILY_CAP}/24h) for \`@mister-meow\`. Further mentions in this window will be silently ignored. Try again in 24 hours.
+
+          ---
+          mister-meow | Type \`@mister-meow\` to interact further"
+            fi
+          else
+            echo "exceeded=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: React to comment with eyes
+        if: steps.rate-check.outputs.exceeded != 'true'
         env:
           GH_TOKEN: ${{ steps.bot-token.outputs.token }}
         run: |
@@ -40,6 +79,7 @@ jobs:
 
       - name: Get PR HEAD SHA
         id: pr-info
+        if: steps.rate-check.outputs.exceeded != 'true'
         env:
           GH_TOKEN: ${{ steps.bot-token.outputs.token }}
         run: |
@@ -49,6 +89,7 @@ jobs:
           echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
 
       - name: Run mister-meow for PR Comment
+        if: steps.rate-check.outputs.exceeded != 'true'
         uses: ./.github/actions/run-claude
         env:
           MENTION_REPO: ${{ github.repository }}
