@@ -35,6 +35,9 @@ jobs:
           client-id: ${{ secrets.VFS_BOT_APP_ID }}
           private-key: ${{ secrets.VFS_BOT_APP_PRIVATE_KEY }}
 
+      # Cap external users only — OWNER/MEMBER/COLLABORATOR are exempt.
+      # The job-level `if:` is broader (also admits CONTRIBUTOR/FIRST_TIME_CONTRIBUTOR
+      # and the PR author); this step caps everyone the job admits except trusted insiders.
       - name: Check daily mention cap for external users
         id: rate-check
         if: ${{ !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) }}
@@ -48,9 +51,12 @@ jobs:
           SINCE=$(date -u -d '24 hours ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null \
             || date -u -v-24H '+%Y-%m-%dT%H:%M:%SZ')
 
+          # `gh api --paginate --jq` runs jq per page and emits one result per page,
+          # so we sum across pages with awk. `+0` guarantees 0 for empty input.
           COUNT=$(gh api -X GET "repos/${REPO}/issues/comments" \
             -f since="${SINCE}" -f per_page=100 --paginate \
-            --jq "[.[] | select(.user.login == \"${USER_LOGIN}\" and (.body | contains(\"@mister-meow\")))] | length")
+            --jq "[.[] | select(.user.login == \"${USER_LOGIN}\" and (.body | contains(\"@mister-meow\")))] | length" \
+            | awk '{s+=$1} END {print s+0}')
 
           echo "count=${COUNT}" >> "$GITHUB_OUTPUT"
 
@@ -58,7 +64,9 @@ jobs:
             echo "exceeded=true" >> "$GITHUB_OUTPUT"
 
             ALREADY_NOTIFIED=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
-              --jq "[.[] | select(.user.type == \"Bot\" and (.body | contains(\"daily mention limit\")) and .created_at >= \"${SINCE}\")] | length")
+              -f per_page=100 --paginate \
+              --jq "[.[] | select(.user.type == \"Bot\" and (.body | contains(\"daily mention limit\")) and .created_at >= \"${SINCE}\")] | length" \
+              | awk '{s+=$1} END {print s+0}')
 
             if [ "${ALREADY_NOTIFIED}" -eq 0 ]; then
               gh issue comment "${PR_NUMBER}" -R "${REPO}" --body "@${USER_LOGIN} you've hit the daily mention limit (${DAILY_CAP}/24h) for \`@mister-meow\`. Further mentions in this window will be silently ignored. Try again in 24 hours.
