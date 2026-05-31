@@ -106,4 +106,32 @@ describe("API path normalization", () => {
     expect(data.oldPath).toBe("/rename-src.txt");
     expect(data.newPath).toBe("/rename-dst.txt");
   });
+
+  test("GET /file normalizes path before lookup", async () => {
+    await api("POST", "/file", { path: "/read-norm/a.txt", content: "alpha" });
+    const res = await api("GET", "/file?path=//read-norm/./a.txt");
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.path).toBe("/read-norm/a.txt");
+    expect(data.content).toBe("alpha");
+  });
+
+  test("GET /file resolves '..' segments before lookup", async () => {
+    await api("POST", "/file", { path: "/read-norm/b.txt", content: "beta" });
+    const res = await api("GET", "/file?path=/read-norm/sub/../b.txt");
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.path).toBe("/read-norm/b.txt");
+    expect(data.content).toBe("beta");
+  });
+
+  test("GET /files normalizes directory path before listing", async () => {
+    await api("POST", "/file", { path: "/list-norm/c.txt", content: "gamma" });
+    const res = await api("GET", "/files?path=//list-norm/./");
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as Array<{ name: string; path: string }>;
+    expect(data.map((e) => e.name).sort()).toContain("c.txt");
+    const entry = data.find((e) => e.name === "c.txt");
+    expect(entry?.path).toBe("/list-norm/c.txt");
+  });
 });
