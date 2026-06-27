@@ -40,7 +40,7 @@ But a real filesystem is a poor production substrate for agents:
 - **State is ephemeral in a sandbox** Files die with the sandbox unless you bolt on volumes, and backup/restore is per-box.
 - **No indexed search in a regular filesystem** It doesnt have FTS, trigram, no vectors. Every agent reinvents retrieval on top of raw files.
 
-> `postgres-vfs` collapses bash + filesystem onto a single Postgres table. Agents keep their native `grep` / `cat` / `find` workflow. Isolation is enforced at two layers: an application-level `tenant_id` predicate on every query, and Postgres Row-Level Security (RLS) that scopes each connection to its tenant at the database layer. Search is indexed (FTS + trigram + optional pgvector). State persists across sessions. A new workspace spins up in milliseconds.
+> `postgres-vfs` collapses bash + filesystem onto a single Postgres table. Agents keep their native `grep` / `cat` / `find` workflow. Isolation is enforced at two layers: an application-level `tenant_id` predicate on every query, and Postgres Row-Level Security (RLS) that scopes each tenant-data transaction to its tenant at the database layer. Search is indexed (FTS + trigram + optional pgvector). State persists across sessions. A new workspace spins up in milliseconds.
 
 ---
 
@@ -205,7 +205,7 @@ Open [http://localhost:4321](http://localhost:4321) in your browser.
 - **75+ bash commands.** `grep`, `sed`, `awk`, `jq`, `find`, `sort`, `wc`, pipes, redirections, variables, loops. All backed by Postgres.
 - **Three-tier search.** Full-text (tsvector), fuzzy/regex (pg_trgm), and optional semantic similarity (pgvector).
 - **Auto-embedding pipeline.** Files are embedded on write and queries use vector similarity when `OPENAI_API_KEY` is set; silently degrades without it.
-- **Multi-tenant isolation.** Row-Level Security enforces tenant isolation at the database layer — each agent only sees its own files, even if a query omits the tenant filter.
+- **Multi-tenant isolation.** A per-query `tenant_id` predicate plus Postgres Row-Level Security enforce tenant scoping at the database layer — even if a query omits the tenant filter, an agent only sees its own files. Defense-in-depth against query bugs, not a boundary against direct database access.
 - **bash-tool integration.** Drop-in compatibility with [bash-tool](https://github.com/vercel-labs/bash-tool).
 - **Web UI.** Three-column file manager for browsing, editing, searching, and tagging.
 - **In-memory caching.** Path tree, directory listings, and stat data cached on init for sub-millisecond lookups.
