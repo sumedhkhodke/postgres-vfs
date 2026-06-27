@@ -1,5 +1,6 @@
 import type { DbClient } from "../db/client.js";
 import { toVectorLiteral } from "../utils.js";
+import { normalizePath } from "./path-utils.js";
 
 export async function updateEmbedding(
   sql: DbClient,
@@ -7,11 +8,12 @@ export async function updateEmbedding(
   path: string,
   embedding: number[]
 ): Promise<void> {
+  const resolved = normalizePath(path);
   const vecLiteral = toVectorLiteral(embedding);
   await sql`
     UPDATE vfs_files
     SET embedding = ${vecLiteral}::vector
-    WHERE tenant_id = ${tenantId} AND path = ${path}
+    WHERE tenant_id = ${tenantId} AND path = ${resolved}
   `;
 }
 
@@ -21,26 +23,29 @@ export async function updateSummary(
   path: string,
   summary: string
 ): Promise<void> {
+  const resolved = normalizePath(path);
   await sql`
     UPDATE vfs_files SET summary = ${summary}
-    WHERE tenant_id = ${tenantId} AND path = ${path}
+    WHERE tenant_id = ${tenantId} AND path = ${resolved}
   `;
 }
 
 export async function addTag(sql: DbClient, tenantId: string, path: string, tag: string): Promise<void> {
+  const resolved = normalizePath(path);
   await sql`
     UPDATE vfs_files
     SET tags = array_append(tags, ${tag})
-    WHERE tenant_id = ${tenantId} AND path = ${path}
+    WHERE tenant_id = ${tenantId} AND path = ${resolved}
       AND NOT (${tag} = ANY(tags))
   `;
 }
 
 export async function removeTag(sql: DbClient, tenantId: string, path: string, tag: string): Promise<void> {
+  const resolved = normalizePath(path);
   await sql`
     UPDATE vfs_files
     SET tags = array_remove(tags, ${tag})
-    WHERE tenant_id = ${tenantId} AND path = ${path}
+    WHERE tenant_id = ${tenantId} AND path = ${resolved}
   `;
 }
 

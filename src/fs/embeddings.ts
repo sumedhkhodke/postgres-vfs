@@ -1,5 +1,5 @@
 import type { DbClient } from "../db/client.js";
-import { toVectorLiteral } from "../utils.js";
+import { updateEmbedding } from "./metadata.js";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL ?? "text-embedding-3-small";
@@ -50,10 +50,5 @@ export async function embedFile(
   if (!OPENAI_API_KEY || !content.trim()) return;
   const embedding = await generateEmbedding(content);
   if (!embedding) return;
-  const vecLiteral = toVectorLiteral(embedding);
-  await sql`
-    UPDATE vfs_files
-    SET embedding = ${vecLiteral}::vector
-    WHERE tenant_id = ${tenantId} AND path = ${path}
-  `;
+  await updateEmbedding(sql, tenantId, path, embedding);
 }

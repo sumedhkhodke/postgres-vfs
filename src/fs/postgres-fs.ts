@@ -5,7 +5,7 @@ import type {
   BufferEncoding,
 } from "just-bash";
 import type { DbClient } from "../db/client.js";
-import { normalizePath, parentDir, basename, ancestors, escapeLike } from "./path-utils.js";
+import { normalizePath, parentDir, basename, ancestors, escapeLike, resolvePath } from "./path-utils.js";
 
 export interface DirentEntry {
   name: string;
@@ -521,8 +521,7 @@ export class PostgresFs implements IFileSystem {
   }
 
   resolvePath(base: string, path: string): string {
-    if (path.startsWith("/")) return normalizePath(path);
-    return normalizePath(base + "/" + path);
+    return resolvePath(base, path);
   }
 
   getAllPaths(): string[] {

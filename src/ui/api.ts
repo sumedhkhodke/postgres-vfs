@@ -67,7 +67,7 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
     }
 
     if (route === "/files" && req.method === "GET") {
-      const path = url.searchParams.get("path") ?? "/";
+      const path = normalizePath(url.searchParams.get("path") ?? "/");
       const fs = await getFs(tenant);
       const entries = await fs.readdirWithFileTypes(path);
       const detailed = [];
@@ -84,8 +84,9 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
     }
 
     if (route === "/file" && req.method === "GET") {
-      const path = url.searchParams.get("path");
-      if (!path) return err("path required");
+      const rawPath = url.searchParams.get("path");
+      if (!rawPath) return err("path required");
+      const path = normalizePath(rawPath);
       const fs = await getFs(tenant);
       const content = await fs.readFile(path);
       const st = await fs.stat(path);

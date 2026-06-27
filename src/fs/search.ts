@@ -1,5 +1,6 @@
 import type { DbClient } from "../db/client.js";
 import { toVectorLiteral } from "../utils.js";
+import { normalizePath } from "./path-utils.js";
 
 export interface GrepResult {
   path: string;
@@ -42,11 +43,12 @@ export async function grepFiles(
   // Stage 1: Coarse filter in Postgres
   let rows;
   if (options?.paths && options.paths.length > 0) {
+    const paths = options.paths.map(normalizePath);
     rows = await sql`
       SELECT path, content FROM vfs_files
       WHERE tenant_id = ${tenantId}
         AND is_dir = false
-        AND path = ANY(${options.paths})
+        AND path = ANY(${paths})
         AND content IS NOT NULL
     `;
   } else {

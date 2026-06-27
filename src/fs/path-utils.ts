@@ -14,6 +14,12 @@ export function normalizePath(path: string): string {
   return "/" + resolved.join("/");
 }
 
+/** Resolve a path against a base directory (e.g. cwd), then canonicalize it. */
+export function resolvePath(base: string, path: string): string {
+  if (path.startsWith("/")) return normalizePath(path);
+  return normalizePath(base + "/" + path);
+}
+
 export function parentDir(path: string): string {
   const idx = path.lastIndexOf("/");
   if (idx <= 0) return "/";
