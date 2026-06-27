@@ -42,7 +42,6 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      # Trusted publishing (OIDC) needs npm >= 11.5.1; Node 22 ships npm 10.x.
       - run: npm install -g npm@latest
 
       # Sync package.json version to the release tag so we don't accidentally
@@ -67,9 +66,6 @@ jobs:
 
       - run: bun test
 
-      # Publishes to npmjs.org via trusted publishing (OIDC) — no NPM_TOKEN.
-      # Provenance is generated automatically. Requires a trusted publisher
-      # configured on npmjs.com for this repo + workflow filename (publish.yml).
       - run: npm publish --access public
 
       - uses: actions/setup-node@v6
