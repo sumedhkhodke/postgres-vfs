@@ -42,6 +42,9 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
+      # Trusted publishing (OIDC) needs npm >= 11.5.1; Node 22 ships npm 10.x.
+      - run: npm install -g npm@latest
+
       # Sync package.json version to the release tag so we don't accidentally
       # republish whatever's on main. Without this, forgetting to bump
       # package.json before tagging causes `npm publish` to retry the previous
@@ -64,9 +67,10 @@ jobs:
 
       - run: bun test
 
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # Publishes to npmjs.org via trusted publishing (OIDC) — no NPM_TOKEN.
+      # Provenance is generated automatically. Requires a trusted publisher
+      # configured on npmjs.com for this repo + workflow filename (publish.yml).
+      - run: npm publish --access public
 
       - uses: actions/setup-node@v6
         with:
