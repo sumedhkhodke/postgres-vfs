@@ -349,7 +349,7 @@ Symlinks live in a separate `vfs_symlinks` table.
 
 ### 4.2 Multi-tenancy (RLS)
 
-Tenant isolation is enforced at two layers. Every query carries a `tenant_id` predicate (application layer). Beneath it, Postgres Row-Level Security provides defense-in-depth: each tenant-data transaction assumes a restricted `vfs_app` role (via `SET LOCAL ROLE`) and sets an `app.tenant_id` setting, and the `tenant_isolation` policy on `vfs_files`/`vfs_symlinks` filters every row to that tenant — so isolation holds even if a query forgets the predicate. Migrations and the admin `/tenants` endpoint run as the table owner, which intentionally bypasses RLS. (Requires the migrating role to have `CREATEROLE`/superuser to create the `vfs_app` role.)
+Tenant isolation is enforced at two layers. Every query carries a `tenant_id` predicate (application layer). Beneath it, Postgres Row-Level Security provides defense-in-depth: each tenant-data transaction assumes a restricted `vfs_app` role (via `SET LOCAL ROLE`) and sets an `app.tenant_id` setting, and the `tenant_isolation` policy on `vfs_files`/`vfs_symlinks` filters every row to that tenant — so isolation holds even if a query forgets the predicate. Migrations and the admin `/tenants` endpoint run as the table owner, which intentionally bypasses RLS. (Requires the migrating role to have `CREATEROLE`/superuser to create the `vfs_app` role.) The application must connect with the same role used to run migrations — or a role separately granted membership in `vfs_app` — so it can `SET ROLE vfs_app` at runtime.
 
 ```bash
 # Alice's workspace

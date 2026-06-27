@@ -2,7 +2,7 @@ import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { createClient, type DbClient } from "../src/db/client.js";
 import { withTenant } from "../src/db/tenant.js";
 import { ftsSearch, fuzzySearch } from "../src/fs/search.js";
-import { findByTag, recentFiles } from "../src/fs/metadata.js";
+import { findByTag, recentFiles, updateEmbedding } from "../src/fs/metadata.js";
 import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -118,5 +118,14 @@ describe("search + metadata run under RLS", () => {
     const files = await recentFiles(sql, A, 50);
     expect(files.every((f) => f.path !== "/b.txt")).toBe(true);
     expect(files.some((f) => f.path === "/doc.txt")).toBe(true);
+  });
+
+  test("updateEmbedding writes an embedding under RLS for the tenant", async () => {
+    const vec = Array(1536).fill(0.1);
+    await updateEmbedding(sql, A, "/doc.txt", vec);
+    const rows = await withTenant(sql, A, (tx) =>
+      tx`SELECT embedding IS NOT NULL AS has_emb FROM vfs_files WHERE path = '/doc.txt'`
+    );
+    expect(rows[0].has_emb).toBe(true);
   });
 });
