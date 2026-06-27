@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { createClient, type DbClient } from "../src/db/client.js";
+import { withTenant } from "../src/db/tenant.js";
 import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -61,5 +62,34 @@ describe("Row-Level Security (database-level enforcement)", () => {
       const rows = await tx`SELECT * FROM vfs_files`;
       expect(rows.length).toBe(0);
     });
+  });
+});
+
+describe("withTenant helper", () => {
+  test("runs the callback as vfs_app with the tenant GUC set", async () => {
+    const rows = await withTenant(sql, A, (tx) =>
+      tx`SELECT current_user AS role, current_setting('app.tenant_id', true) AS tenant`
+    );
+    expect(rows[0].role).toBe("vfs_app");
+    expect(rows[0].tenant).toBe(A);
+  });
+
+  test("scopes reads to the tenant", async () => {
+    const own = await withTenant(sql, A, (tx) => tx`SELECT tenant_id FROM vfs_files`);
+    expect(own.length).toBeGreaterThan(0);
+    expect(own.every((r) => r.tenant_id === A)).toBe(true);
+
+    const cross = await withTenant(sql, A, (tx) => tx`SELECT * FROM vfs_files WHERE tenant_id = ${B}`);
+    expect(cross.length).toBe(0);
+  });
+
+  test("role and GUC do not leak back to the pooled connection", async () => {
+    await withTenant(sql, A, (tx) => tx`SELECT 1`);
+    const after = await sql`SELECT current_user AS role, current_setting('app.tenant_id', true) AS tenant`;
+    expect(after[0].role).not.toBe("vfs_app");
+    // PostgreSQL reverts SET LOCAL custom GUCs to "" (not null) after commit on
+    // the same session; toBeFalsy covers both "" and null — the security
+    // property holds since "" won't match any real tenant_id.
+    expect(after[0].tenant).toBeFalsy();
   });
 });
