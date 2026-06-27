@@ -88,6 +88,25 @@ describe("tag / untag / tags commands", () => {
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("Usage");
   });
+
+  test("tag normalizes a non-canonical path", async () => {
+    await sandbox.executeCommand("tag //docs/./guide.md normtag");
+    const result = await sandbox.executeCommand("tags normtag");
+    expect(result.stdout).toContain("/docs/guide.md");
+  });
+
+  test("tag resolves a cwd-relative path", async () => {
+    await sandbox.executeCommand("cd /docs && tag guide.md cwdtag");
+    const result = await sandbox.executeCommand("tags cwdtag");
+    expect(result.stdout).toContain("/docs/guide.md");
+  });
+
+  test("untag normalizes a non-canonical path", async () => {
+    await sandbox.executeCommand("tag /docs/faq.md untagme");
+    await sandbox.executeCommand("untag //docs/./faq.md untagme");
+    const result = await sandbox.executeCommand("tags untagme");
+    expect(result.stdout).not.toContain("/docs/faq.md");
+  });
 });
 
 describe("recent command", () => {
@@ -121,5 +140,11 @@ describe("summarize command", () => {
     const result = await sandbox.executeCommand("summarize /only-path");
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("Usage");
+  });
+
+  test("normalizes a non-canonical path before storing the summary", async () => {
+    await sandbox.executeCommand('summarize //docs/./faq.md normalized summary text');
+    const rows = await sql`SELECT summary FROM vfs_files WHERE tenant_id = ${TEST_TENANT} AND path = '/docs/faq.md'`;
+    expect(rows[0].summary).toBe("normalized summary text");
   });
 });

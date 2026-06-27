@@ -5,6 +5,7 @@ import { hybridSearch } from "../fs/search.js";
 import { addTag, removeTag, findByTag, recentFiles, updateSummary } from "../fs/metadata.js";
 import { errorMessage } from "../utils.js";
 import { generateEmbedding } from "../fs/embeddings.js";
+import { resolvePath } from "../fs/path-utils.js";
 
 const MAX_LIMIT = 1000;
 
@@ -55,24 +56,24 @@ export function createCustomCommands(sql: DbClient, tenantId: string): CustomCom
     }
   });
 
-  const tagCmd = defineCommand("tag", async (args, _ctx) => {
+  const tagCmd = defineCommand("tag", async (args, ctx) => {
     if (args.length < 2) {
       return { stdout: "", stderr: "Usage: tag <path> <tag>\n", exitCode: 1 };
     }
     try {
-      await addTag(sql, tenantId, args[0], args[1]);
+      await addTag(sql, tenantId, resolvePath(ctx.cwd, args[0]), args[1]);
       return { stdout: "", stderr: "", exitCode: 0 };
     } catch (err) {
       return cmdError("tag", err);
     }
   });
 
-  const untagCmd = defineCommand("untag", async (args, _ctx) => {
+  const untagCmd = defineCommand("untag", async (args, ctx) => {
     if (args.length < 2) {
       return { stdout: "", stderr: "Usage: untag <path> <tag>\n", exitCode: 1 };
     }
     try {
-      await removeTag(sql, tenantId, args[0], args[1]);
+      await removeTag(sql, tenantId, resolvePath(ctx.cwd, args[0]), args[1]);
       return { stdout: "", stderr: "", exitCode: 0 };
     } catch (err) {
       return cmdError("untag", err);
@@ -106,12 +107,12 @@ export function createCustomCommands(sql: DbClient, tenantId: string): CustomCom
     }
   });
 
-  const summarizeCmd = defineCommand("summarize", async (args, _ctx) => {
+  const summarizeCmd = defineCommand("summarize", async (args, ctx) => {
     if (args.length < 2) {
       return { stdout: "", stderr: "Usage: summarize <path> <summary text...>\n", exitCode: 1 };
     }
     try {
-      await updateSummary(sql, tenantId, args[0], args.slice(1).join(" "));
+      await updateSummary(sql, tenantId, resolvePath(ctx.cwd, args[0]), args.slice(1).join(" "));
       return { stdout: "", stderr: "", exitCode: 0 };
     } catch (err) {
       return cmdError("summarize", err);
