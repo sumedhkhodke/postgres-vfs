@@ -1,8 +1,8 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { createClient, type DbClient } from "../src/db/client.js";
 import { withTenant } from "../src/db/tenant.js";
-import { ftsSearch, fuzzySearch } from "../src/fs/search";
-import { findByTag, recentFiles } from "../src/fs/metadata";
+import { ftsSearch, fuzzySearch } from "../src/fs/search.js";
+import { findByTag, recentFiles } from "../src/fs/metadata.js";
 import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
