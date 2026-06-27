@@ -1,4 +1,5 @@
 import type { DbClient } from "../db/client.js";
+import { withTenant } from "../db/tenant.js";
 import { toVectorLiteral } from "../utils.js";
 import { normalizePath } from "./path-utils.js";
 
@@ -44,25 +45,25 @@ export async function grepFiles(
   let rows;
   if (options?.paths && options.paths.length > 0) {
     const paths = options.paths.map(normalizePath);
-    rows = await sql`
+    rows = await withTenant(sql, tenantId, (tx) => tx`
       SELECT path, content FROM vfs_files
       WHERE tenant_id = ${tenantId}
         AND is_dir = false
         AND path = ANY(${paths})
         AND content IS NOT NULL
-    `;
+    `);
   } else {
     // Escape Postgres regex special chars for safe coarse filtering
     const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const pgPattern = options?.caseInsensitive ? `(?i)${escaped}` : escaped;
-    rows = await sql`
+    rows = await withTenant(sql, tenantId, (tx) => tx`
       SELECT path, content FROM vfs_files
       WHERE tenant_id = ${tenantId}
         AND is_dir = false
         AND content IS NOT NULL
         AND content ~ ${pgPattern}
       LIMIT ${limit * 2}
-    `;
+    `);
   }
 
   // Stage 2: Fine filter — precise regex matching with line numbers
@@ -98,7 +99,7 @@ export async function ftsSearch(
   query: string,
   limit: number = 20
 ): Promise<SearchResult[]> {
-  const rows = await sql`
+  const rows = await withTenant(sql, tenantId, (tx) => tx`
     SELECT path, summary,
            ts_rank_cd(content_tsv, websearch_to_tsquery('english', ${query})) AS score
     FROM vfs_files
@@ -107,7 +108,7 @@ export async function ftsSearch(
       AND content_tsv @@ websearch_to_tsquery('english', ${query})
     ORDER BY score DESC
     LIMIT ${limit}
-  `;
+  `);
   return mapSearchRows(rows);
 }
 
@@ -117,7 +118,7 @@ export async function fuzzySearch(
   term: string,
   limit: number = 20
 ): Promise<SearchResult[]> {
-  const rows = await sql`
+  const rows = await withTenant(sql, tenantId, (tx) => tx`
     SELECT path, summary,
            similarity(content, ${term}) AS score
     FROM vfs_files
@@ -127,7 +128,7 @@ export async function fuzzySearch(
       AND content % ${term}
     ORDER BY score DESC
     LIMIT ${limit}
-  `;
+  `);
   return mapSearchRows(rows);
 }
 
@@ -142,7 +143,7 @@ export async function semanticSearch(
   limit: number = 10
 ): Promise<SearchResult[]> {
   const vecLiteral = toVectorLiteral(embedding);
-  const rows = await sql`
+  const rows = await withTenant(sql, tenantId, (tx) => tx`
     SELECT path, summary,
            1 - (embedding <=> ${vecLiteral}::vector) AS score
     FROM vfs_files
@@ -151,7 +152,7 @@ export async function semanticSearch(
       AND embedding IS NOT NULL
     ORDER BY embedding <=> ${vecLiteral}::vector
     LIMIT ${limit}
-  `;
+  `);
   return mapSearchRows(rows);
 }
 
@@ -175,7 +176,7 @@ export async function hybridSearch(
 
   if (options?.embedding) {
     const vecLiteral = toVectorLiteral(options.embedding);
-    const rows = await sql`
+    const rows = await withTenant(sql, tenantId, (tx) => tx`
       SELECT path, summary,
         (
           COALESCE(ts_rank_cd(content_tsv, websearch_to_tsquery('english', ${query})), 0) * ${w.fts} +
@@ -193,13 +194,13 @@ export async function hybridSearch(
         )
       ORDER BY score DESC
       LIMIT ${limit}
-    `;
+    `);
     return mapSearchRows(rows);
   }
 
   // No embedding — FTS + trigram only
   const ftsWeight = w.fts + w.vector;
-  const rows = await sql`
+  const rows = await withTenant(sql, tenantId, (tx) => tx`
     SELECT path, summary,
       (
         COALESCE(ts_rank_cd(content_tsv, websearch_to_tsquery('english', ${query})), 0) * ${ftsWeight} +
@@ -215,6 +216,6 @@ export async function hybridSearch(
       )
     ORDER BY score DESC
     LIMIT ${limit}
-  `;
+  `);
   return mapSearchRows(rows);
 }

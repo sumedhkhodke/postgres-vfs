@@ -1,6 +1,8 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { createClient, type DbClient } from "../src/db/client.js";
 import { withTenant } from "../src/db/tenant.js";
+import { ftsSearch, fuzzySearch } from "../src/fs/search";
+import { findByTag, recentFiles } from "../src/fs/metadata";
 import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -20,6 +22,8 @@ beforeAll(async () => {
   await sql`INSERT INTO vfs_files (tenant_id, path, content) VALUES (${B}, '/b.txt', 'B data')`;
   await sql`INSERT INTO vfs_symlinks (tenant_id, path, target) VALUES (${A}, '/la', '/a.txt')`;
   await sql`INSERT INTO vfs_symlinks (tenant_id, path, target) VALUES (${B}, '/lb', '/b.txt')`;
+  await sql`INSERT INTO vfs_files (tenant_id, path, content, tags)
+            VALUES (${A}, '/doc.txt', 'the quick brown fox', ARRAY['alpha'])`;
 });
 
 afterAll(async () => {
@@ -91,5 +95,28 @@ describe("withTenant helper", () => {
     // the same session; toBeFalsy covers both "" and null — the security
     // property holds since "" won't match any real tenant_id.
     expect(after[0].tenant).toBeFalsy();
+  });
+});
+
+describe("search + metadata run under RLS", () => {
+  test("ftsSearch returns the tenant's matching file", async () => {
+    const results = await ftsSearch(sql, A, "quick");
+    expect(results.some((r) => r.path === "/doc.txt")).toBe(true);
+  });
+
+  test("fuzzySearch executes under vfs_app (trigram grants sufficient)", async () => {
+    const results = await fuzzySearch(sql, A, "quick brown");
+    expect(Array.isArray(results)).toBe(true);
+  });
+
+  test("findByTag returns the tenant's tagged path", async () => {
+    const paths = await findByTag(sql, A, "alpha");
+    expect(paths).toContain("/doc.txt");
+  });
+
+  test("recentFiles is scoped to the tenant", async () => {
+    const files = await recentFiles(sql, A, 50);
+    expect(files.every((f) => f.path !== "/b.txt")).toBe(true);
+    expect(files.some((f) => f.path === "/doc.txt")).toBe(true);
   });
 });
