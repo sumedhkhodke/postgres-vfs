@@ -93,7 +93,15 @@ END $$;
 
 -- The migrating/owner role must be able to SET ROLE vfs_app. Superusers always
 -- can; a non-superuser owner needs this membership grant.
-GRANT vfs_app TO CURRENT_USER;
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_auth_members am
+    JOIN pg_roles r ON r.oid = am.roleid AND r.rolname = 'vfs_app'
+    WHERE am.member = (SELECT oid FROM pg_roles WHERE rolname = current_user)
+  ) THEN
+    EXECUTE format('GRANT vfs_app TO %I', current_user);
+  END IF;
+END $$;
 
 GRANT USAGE ON SCHEMA public TO vfs_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON vfs_files    TO vfs_app;

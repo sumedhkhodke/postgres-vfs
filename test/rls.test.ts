@@ -52,7 +52,7 @@ describe("Row-Level Security (database-level enforcement)", () => {
         await tx`SELECT set_config('app.tenant_id', ${A}, true)`;
         await tx`INSERT INTO vfs_files (tenant_id, path, content) VALUES (${B}, '/evil.txt', 'x')`;
       })
-    ).rejects.toThrow();
+    ).rejects.toThrow(/violates row-level security policy/i);
   });
 
   test("unset tenant GUC denies all rows (fail closed)", async () => {
