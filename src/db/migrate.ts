@@ -9,7 +9,9 @@ async function migrate() {
   const databaseUrl = process.env.DATABASE_URL ?? "postgres://localhost:5432/postgres_vfs";
   const sql = postgres(databaseUrl);
 
-  console.log(`Migrating database: ${databaseUrl}`);
+  // Never print the URL itself: it carries the password.
+  const { hostname, port, pathname } = new URL(databaseUrl);
+  console.log(`Migrating database: ${hostname}${port ? `:${port}` : ""}${pathname}`);
 
   const schema = readFileSync(join(__dirname, "schema.sql"), "utf-8");
 
