@@ -50,3 +50,39 @@ jobs:
       - run: bun run migrate
 
       - run: bun test
+
+  # Managed Postgres (Neon, Supabase, RDS) migrates as a non-superuser owner and
+  # the app should log in as a least-privilege role. The job above runs as
+  # superuser, which can always SET ROLE, so it can't catch membership bugs.
+  # This job gets a fresh cluster (no vfs_app yet) and only uses the superuser
+  # URL to create the owner role and database.
+  rls-nonsuperuser:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      RLS_NONSUPERUSER_ADMIN_URL: postgres://postgres:postgres@localhost:5432/postgres
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - run: bun test test/rls-nonsuperuser.test.ts

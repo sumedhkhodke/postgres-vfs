@@ -92,9 +92,15 @@ DO $$ BEGIN
 END $$;
 
 -- The migrating/owner role must be able to SET ROLE vfs_app. Superusers always
--- can; a non-superuser owner needs this membership grant.
+-- can; a non-superuser owner needs a membership grant with the SET option.
+-- On PostgreSQL 16+, CREATE ROLE by a non-superuser auto-grants the creator an
+-- ADMIN-only membership (SET and INHERIT false), so "skip if a membership
+-- exists" would leave the owner unable to SET ROLE. Grant SET explicitly; on
+-- 16+ re-granting just updates the options, so this stays idempotent.
 DO $$ BEGIN
-  IF NOT EXISTS (
+  IF current_setting('server_version_num')::int >= 160000 THEN
+    EXECUTE format('GRANT vfs_app TO %I WITH INHERIT FALSE, SET TRUE', current_user);
+  ELSIF NOT EXISTS (
     SELECT 1 FROM pg_auth_members am
     JOIN pg_roles r ON r.oid = am.roleid AND r.rolname = 'vfs_app'
     WHERE am.member = (SELECT oid FROM pg_roles WHERE rolname = current_user)
