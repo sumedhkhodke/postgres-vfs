@@ -5,6 +5,7 @@ export { PostgresFs, type DirentEntry } from "./fs/postgres-fs.js";
 
 // Database
 export { createClient, type DbClient } from "./db/client.js";
+export { withTenant } from "./db/tenant.js";
 
 // Path utilities
 export { normalizePath, resolvePath, parentDir, basename, ancestors, escapeLike } from "./fs/path-utils.js";

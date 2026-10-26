@@ -351,6 +351,16 @@ Symlinks live in a separate `vfs_symlinks` table.
 
 Tenant isolation is enforced at two layers. Every query carries a `tenant_id` predicate (application layer). Beneath it, Postgres Row-Level Security provides defense-in-depth: each tenant-data transaction assumes a restricted `vfs_app` role (via `SET LOCAL ROLE`) and sets an `app.tenant_id` setting, and the `tenant_isolation` policy on `vfs_files`/`vfs_symlinks` filters every row to that tenant — so isolation holds even if a query forgets the predicate. Migrations and the admin `/tenants` endpoint run as the table owner, which intentionally bypasses RLS. (Requires the migrating role to have `CREATEROLE`/superuser to create the `vfs_app` role.) The application must connect with the same role used to run migrations — or a role separately granted membership in `vfs_app` — so it can `SET ROLE vfs_app` at runtime.
 
+**Least-privilege login role (recommended for production).** Run migrations as the owner, then let the app log in as a role that can only become `vfs_app`. With `NOINHERIT`, any query that bypasses `withTenant` fails with `permission denied` instead of silently returning nothing:
+
+```sql
+-- as the owner, after `bun run migrate`
+CREATE ROLE app_login LOGIN NOINHERIT PASSWORD '...';
+GRANT vfs_app TO app_login WITH INHERIT FALSE, SET TRUE;   -- PostgreSQL 16+
+```
+
+On PostgreSQL 16+, `schema.sql` grants the migrating owner `vfs_app` membership `WITH SET TRUE` explicitly: a non-superuser that creates a role only receives an ADMIN membership, which doesn't allow `SET ROLE`. Cross-tenant maintenance (cleanup jobs, admin listings) should run as the owner or through a narrow `SECURITY DEFINER` function owned by it. `withTenant(sql, tenantId, fn)` is exported for application queries outside `PostgresFs`.
+
 ```bash
 # Alice's workspace
 TENANT_ID=alice bun run ui
