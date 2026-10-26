@@ -6,6 +6,7 @@ import type {
 } from "just-bash";
 import type { DbClient } from "../db/client.js";
 import { normalizePath, parentDir, basename, ancestors, escapeLike, resolvePath } from "./path-utils.js";
+import { withTenant } from "../db/tenant.js";
 
 export interface DirentEntry {
   name: string;
@@ -66,16 +67,21 @@ export class PostgresFs implements IFileSystem {
     private tenantId: string
   ) {}
 
+  /** Run a tenant-scoped DB operation under RLS (SET LOCAL ROLE vfs_app + GUC). */
+  private tx<T>(fn: (tx: DbClient) => Promise<T>): Promise<T> {
+    return withTenant(this.sql, this.tenantId, fn);
+  }
+
   // ---------------------------------------------------------------------------
   // Cache management
   // ---------------------------------------------------------------------------
 
   async warmCache(): Promise<void> {
-    const rows = await this.sql`
+    const rows = await this.tx((t) => t`
       SELECT path, is_dir, size, mode, updated_at
       FROM vfs_files
       WHERE tenant_id = ${this.tenantId}
-    `;
+    `);
     this.pathCache.clear();
     this.dirCache.clear();
     this.statCache.clear();
@@ -134,10 +140,10 @@ export class PostgresFs implements IFileSystem {
 
   async readFile(path: string, _options?: ReadFileOptions | BufferEncoding): Promise<string> {
     const resolved = normalizePath(path);
-    const rows = await this.sql`
+    const rows = await this.tx((t) => t`
       SELECT content, is_dir FROM vfs_files
       WHERE tenant_id = ${this.tenantId} AND path = ${resolved}
-    `;
+    `);
     if (rows.length === 0) {
       throw fsError("ENOENT", `no such file or directory: ${resolved}`);
     }
@@ -162,12 +168,12 @@ export class PostgresFs implements IFileSystem {
 
     await this.ensureParentDirs(resolved);
 
-    await this.sql`
+    await this.tx((t) => t`
       INSERT INTO vfs_files (tenant_id, path, is_dir, content, mode)
       VALUES (${this.tenantId}, ${resolved}, false, ${text}, ${MODE_FILE})
       ON CONFLICT (tenant_id, path)
       DO UPDATE SET content = ${text}, is_dir = false
-    `;
+    `);
     // size comes from the generated column; use byte length for cache
     this.addToCache(resolved, false, Buffer.byteLength(text), MODE_FILE);
   }
@@ -182,12 +188,12 @@ export class PostgresFs implements IFileSystem {
 
     await this.ensureParentDirs(resolved);
 
-    await this.sql`
+    await this.tx((t) => t`
       INSERT INTO vfs_files (tenant_id, path, is_dir, content, mode)
       VALUES (${this.tenantId}, ${resolved}, false, ${text}, ${MODE_FILE})
       ON CONFLICT (tenant_id, path)
       DO UPDATE SET content = COALESCE(vfs_files.content, '') || ${text}
-    `;
+    `);
     // Cache size is now stale — remove stat so next stat() fetches from DB
     this.statCache.delete(resolved);
     // Ensure path and dir entries exist in cache (without a stat)
@@ -210,11 +216,11 @@ export class PostgresFs implements IFileSystem {
     // If cache is fully warmed, a miss means the path doesn't exist
     if (this.cacheWarmed) return false;
 
-    const rows = await this.sql`
+    const rows = await this.tx((t) => t`
       SELECT 1 FROM vfs_files
       WHERE tenant_id = ${this.tenantId} AND path = ${resolved}
       LIMIT 1
-    `;
+    `);
     return rows.length > 0;
   }
 
@@ -237,10 +243,10 @@ export class PostgresFs implements IFileSystem {
       };
     }
 
-    const rows = await this.sql`
+    const rows = await this.tx((t) => t`
       SELECT is_dir, size, mode, updated_at FROM vfs_files
       WHERE tenant_id = ${this.tenantId} AND path = ${resolved}
-    `;
+    `);
     if (rows.length === 0) {
       throw fsError("ENOENT", `no such file or directory: ${resolved}`);
     }
@@ -266,10 +272,10 @@ export class PostgresFs implements IFileSystem {
   async lstat(path: string): Promise<FsStat> {
     const resolved = normalizePath(path);
 
-    const symlinks = await this.sql`
+    const symlinks = await this.tx((t) => t`
       SELECT target, updated_at FROM vfs_symlinks
       WHERE tenant_id = ${this.tenantId} AND path = ${resolved}
-    `;
+    `);
     if (symlinks.length > 0) {
       return {
         isFile: false,
@@ -292,11 +298,11 @@ export class PostgresFs implements IFileSystem {
       await this.assertAncestorsAreDirs(resolved);
       const dirs = [resolved, ...ancestors(resolved)];
       for (const dir of dirs.reverse()) {
-        await this.sql`
+        await this.tx((t) => t`
           INSERT INTO vfs_files (tenant_id, path, is_dir, mode)
           VALUES (${this.tenantId}, ${dir}, true, ${MODE_DIR})
           ON CONFLICT (tenant_id, path) DO NOTHING
-        `;
+        `);
         this.addToCache(dir, true, 0, MODE_DIR);
       }
     } else {
@@ -307,18 +313,18 @@ export class PostgresFs implements IFileSystem {
           throw fsError("ENOTDIR", `not a directory: ${parent}`);
         }
       }
-      const existing = await this.sql`
+      const existing = await this.tx((t) => t`
         SELECT is_dir FROM vfs_files
         WHERE tenant_id = ${this.tenantId} AND path = ${resolved}
-      `;
+      `);
       if (existing.length > 0) {
         if (existing[0].is_dir) return;
         throw fsError("EEXIST", `file already exists: ${resolved}`);
       }
-      await this.sql`
+      await this.tx((t) => t`
         INSERT INTO vfs_files (tenant_id, path, is_dir, mode)
         VALUES (${this.tenantId}, ${resolved}, true, ${MODE_DIR})
-      `;
+      `);
       this.addToCache(resolved, true, 0, MODE_DIR);
     }
   }
@@ -331,7 +337,7 @@ export class PostgresFs implements IFileSystem {
     }
 
     const prefix = escapeLike(resolved === "/" ? "/" : resolved + "/");
-    const rows = await this.sql`
+    const rows = await this.tx((t) => t`
       SELECT path FROM vfs_files
       WHERE tenant_id = ${this.tenantId}
         AND path LIKE ${prefix + '%'} ESCAPE '\'
@@ -341,7 +347,7 @@ export class PostgresFs implements IFileSystem {
       WHERE tenant_id = ${this.tenantId}
         AND path LIKE ${prefix + '%'} ESCAPE '\'
         AND path NOT LIKE ${prefix + '%/%'} ESCAPE '\'
-    `;
+    `);
 
     const names = rows.map((row) => basename(row.path as string));
     return [...new Set(names)].sort();
@@ -351,7 +357,7 @@ export class PostgresFs implements IFileSystem {
     const resolved = normalizePath(path);
     const prefix = escapeLike(resolved === "/" ? "/" : resolved + "/");
 
-    const rows = await this.sql`
+    const rows = await this.tx((t) => t`
       SELECT path, is_dir, false AS is_symlink FROM vfs_files
       WHERE tenant_id = ${this.tenantId}
         AND path LIKE ${prefix + '%'} ESCAPE '\'
@@ -361,7 +367,7 @@ export class PostgresFs implements IFileSystem {
       WHERE tenant_id = ${this.tenantId}
         AND path LIKE ${prefix + '%'} ESCAPE '\'
         AND path NOT LIKE ${prefix + '%/%'} ESCAPE '\'
-    `;
+    `);
 
     const entries: DirentEntry[] = rows.map((row) => {
       const isSymlink = row.is_symlink as boolean;
@@ -389,13 +395,13 @@ export class PostgresFs implements IFileSystem {
 
     if (options?.recursive) {
       const likePattern = escapeLike(resolved) + "/%";
-      await this.sql.begin(async (tx) => {
-        await tx`
+      await this.tx(async (t) => {
+        await t`
           DELETE FROM vfs_files
           WHERE tenant_id = ${this.tenantId}
             AND (path = ${resolved} OR path LIKE ${likePattern} ESCAPE '\')
         `;
-        await tx`
+        await t`
           DELETE FROM vfs_symlinks
           WHERE tenant_id = ${this.tenantId}
             AND (path = ${resolved} OR path LIKE ${likePattern} ESCAPE '\')
@@ -416,9 +422,9 @@ export class PostgresFs implements IFileSystem {
           throw fsError("ENOTEMPTY", `directory not empty: ${resolved}`);
         }
       }
-      await this.sql.begin(async (tx) => {
-        await tx`DELETE FROM vfs_files WHERE tenant_id = ${this.tenantId} AND path = ${resolved}`;
-        await tx`DELETE FROM vfs_symlinks WHERE tenant_id = ${this.tenantId} AND path = ${resolved}`;
+      await this.tx(async (t) => {
+        await t`DELETE FROM vfs_files WHERE tenant_id = ${this.tenantId} AND path = ${resolved}`;
+        await t`DELETE FROM vfs_symlinks WHERE tenant_id = ${this.tenantId} AND path = ${resolved}`;
       });
       this.invalidateCache(resolved);
     }
@@ -438,35 +444,35 @@ export class PostgresFs implements IFileSystem {
       await this.ensureParentDirs(destResolved);
 
       const likePattern = escapeLike(srcResolved) + "/%";
-      const rows = await this.sql`
+      const rows = await this.tx((t) => t`
         SELECT path, is_dir, content, mode FROM vfs_files
         WHERE tenant_id = ${this.tenantId}
           AND (path = ${srcResolved} OR path LIKE ${likePattern} ESCAPE '\')
-      `;
+      `);
       for (const row of rows) {
         const newPath = destResolved + (row.path as string).slice(srcResolved.length);
-        await this.sql`
+        await this.tx((t) => t`
           INSERT INTO vfs_files (tenant_id, path, is_dir, content, mode)
           VALUES (${this.tenantId}, ${newPath}, ${row.is_dir}, ${row.content}, ${row.mode})
           ON CONFLICT (tenant_id, path)
           DO UPDATE SET content = ${row.content}, is_dir = ${row.is_dir}, mode = ${row.mode}
-        `;
+        `);
         this.addToCache(newPath, row.is_dir as boolean, 0, row.mode as number);
       }
 
       // Also copy symlinks under the source tree
-      const symlinks = await this.sql`
+      const symlinks = await this.tx((t) => t`
         SELECT path, target FROM vfs_symlinks
         WHERE tenant_id = ${this.tenantId}
           AND (path = ${srcResolved} OR path LIKE ${likePattern} ESCAPE '\')
-      `;
+      `);
       for (const sym of symlinks) {
         const newPath = destResolved + (sym.path as string).slice(srcResolved.length);
-        await this.sql`
+        await this.tx((t) => t`
           INSERT INTO vfs_symlinks (tenant_id, path, target)
           VALUES (${this.tenantId}, ${newPath}, ${sym.target})
           ON CONFLICT (tenant_id, path) DO UPDATE SET target = ${sym.target}
-        `;
+        `);
       }
     } else {
       const content = await this.readFile(srcResolved);
@@ -478,10 +484,10 @@ export class PostgresFs implements IFileSystem {
     const srcResolved = normalizePath(src);
     const destResolved = normalizePath(dest);
 
-    const srcExists = (await this.exists(srcResolved)) || (await this.sql`
+    const srcExists = (await this.exists(srcResolved)) || (await this.tx((t) => t`
       SELECT 1 FROM vfs_symlinks
       WHERE tenant_id = ${this.tenantId} AND path = ${srcResolved} LIMIT 1
-    `).length > 0;
+    `)).length > 0;
     if (!srcExists) {
       throw fsError("ENOENT", `no such file or directory: ${srcResolved}`);
     }
@@ -496,19 +502,19 @@ export class PostgresFs implements IFileSystem {
 
     const likePattern = escapeLike(srcResolved) + "/%";
 
-    await this.sql`
+    await this.tx((t) => t`
       UPDATE vfs_files
       SET path = ${destResolved} || substr(path, ${srcResolved.length + 1})
       WHERE tenant_id = ${this.tenantId}
         AND (path = ${srcResolved} OR path LIKE ${likePattern} ESCAPE '\')
-    `;
+    `);
 
-    await this.sql`
+    await this.tx((t) => t`
       UPDATE vfs_symlinks
       SET path = ${destResolved} || substr(path, ${srcResolved.length + 1})
       WHERE tenant_id = ${this.tenantId}
         AND (path = ${srcResolved} OR path LIKE ${likePattern} ESCAPE '\')
-    `;
+    `);
 
     // Collect then invalidate — never mutate Set during iteration
     const toInvalidate = [...this.pathCache].filter(
@@ -530,10 +536,10 @@ export class PostgresFs implements IFileSystem {
 
   async chmod(path: string, mode: number): Promise<void> {
     const resolved = normalizePath(path);
-    const result = await this.sql`
+    const result = await this.tx((t) => t`
       UPDATE vfs_files SET mode = ${mode}
       WHERE tenant_id = ${this.tenantId} AND path = ${resolved}
-    `;
+    `);
     if (result.count === 0) {
       throw fsError("ENOENT", `no such file or directory: ${resolved}`);
     }
@@ -543,19 +549,19 @@ export class PostgresFs implements IFileSystem {
 
   async symlink(target: string, linkPath: string): Promise<void> {
     const resolved = normalizePath(linkPath);
-    await this.sql`
+    await this.tx((t) => t`
       INSERT INTO vfs_symlinks (tenant_id, path, target)
       VALUES (${this.tenantId}, ${resolved}, ${target})
       ON CONFLICT (tenant_id, path) DO UPDATE SET target = ${target}
-    `;
+    `);
   }
 
   async readlink(path: string): Promise<string> {
     const resolved = normalizePath(path);
-    const rows = await this.sql`
+    const rows = await this.tx((t) => t`
       SELECT target FROM vfs_symlinks
       WHERE tenant_id = ${this.tenantId} AND path = ${resolved}
-    `;
+    `);
     if (rows.length === 0) {
       throw fsError("EINVAL", `not a symbolic link: ${resolved}`);
     }
@@ -566,10 +572,10 @@ export class PostgresFs implements IFileSystem {
     const resolved = normalizePath(path);
     let current = resolved;
     for (let i = 0; i < SYMLINK_RESOLVE_LIMIT; i++) {
-      const rows = await this.sql`
+      const rows = await this.tx((t) => t`
         SELECT target FROM vfs_symlinks
         WHERE tenant_id = ${this.tenantId} AND path = ${current}
-      `;
+      `);
       if (rows.length === 0) return current;
       const target = rows[0].target as string;
       current = target.startsWith("/") ? normalizePath(target) : normalizePath(parentDir(current) + "/" + target);
@@ -584,10 +590,10 @@ export class PostgresFs implements IFileSystem {
 
   async utimes(path: string, _atime: Date, mtime: Date): Promise<void> {
     const resolved = normalizePath(path);
-    await this.sql`
+    await this.tx((t) => t`
       UPDATE vfs_files SET updated_at = ${mtime}
       WHERE tenant_id = ${this.tenantId} AND path = ${resolved}
-    `;
+    `);
     const cached = this.statCache.get(resolved);
     if (cached) cached.updatedAt = mtime;
   }
@@ -621,10 +627,10 @@ export class PostgresFs implements IFileSystem {
     }
 
     if (unchecked.length > 0) {
-      const rows = await this.sql`
+      const rows = await this.tx((t) => t`
         SELECT path, is_dir FROM vfs_files
         WHERE tenant_id = ${this.tenantId} AND path = ANY(${unchecked})
-      `;
+      `);
       for (const row of rows) {
         if (!(row.is_dir as boolean)) {
           throw fsError("ENOTDIR", `not a directory: ${row.path as string}`);
@@ -648,11 +654,11 @@ export class PostgresFs implements IFileSystem {
     if (missing.length === 0) return;
 
     for (const dir of missing) {
-      await this.sql`
+      await this.tx((t) => t`
         INSERT INTO vfs_files (tenant_id, path, is_dir, mode)
         VALUES (${this.tenantId}, ${dir}, true, ${MODE_DIR})
         ON CONFLICT (tenant_id, path) DO NOTHING
-      `;
+      `);
       this.addToCache(dir, true, 0, MODE_DIR);
     }
   }

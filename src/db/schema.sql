@@ -77,3 +77,53 @@ DROP TRIGGER IF EXISTS vfs_symlinks_updated_at ON vfs_symlinks;
 CREATE TRIGGER vfs_symlinks_updated_at
   BEFORE UPDATE ON vfs_symlinks
   FOR EACH ROW EXECUTE FUNCTION vfs_update_timestamp();
+
+-- ---------------------------------------------------------------------------
+-- Row-Level Security: defense-in-depth tenant isolation (issue #32)
+-- ---------------------------------------------------------------------------
+
+-- Restricted role the app assumes per-transaction (via SET LOCAL ROLE) so RLS
+-- policies bind. NOLOGIN: only ever reached via SET ROLE, never a direct login.
+-- No BYPASSRLS. Owner/superuser keep their bypass for migrations + admin.
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'vfs_app') THEN
+    CREATE ROLE vfs_app NOLOGIN;
+  END IF;
+END $$;
+
+-- The migrating/owner role must be able to SET ROLE vfs_app. Superusers always
+-- can; a non-superuser owner needs a membership grant with the SET option.
+-- On PostgreSQL 16+, CREATE ROLE by a non-superuser auto-grants the creator an
+-- ADMIN-only membership (SET and INHERIT false), so "skip if a membership
+-- exists" would leave the owner unable to SET ROLE. Grant SET explicitly; on
+-- 16+ re-granting just updates the options, so this stays idempotent.
+DO $$ BEGIN
+  IF current_setting('server_version_num')::int >= 160000 THEN
+    EXECUTE format('GRANT vfs_app TO %I WITH INHERIT FALSE, SET TRUE', current_user);
+  ELSIF NOT EXISTS (
+    SELECT 1 FROM pg_auth_members am
+    JOIN pg_roles r ON r.oid = am.roleid AND r.rolname = 'vfs_app'
+    WHERE am.member = (SELECT oid FROM pg_roles WHERE rolname = current_user)
+  ) THEN
+    EXECUTE format('GRANT vfs_app TO %I', current_user);
+  END IF;
+END $$;
+
+GRANT USAGE ON SCHEMA public TO vfs_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON vfs_files    TO vfs_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON vfs_symlinks TO vfs_app;
+
+-- ENABLE (not FORCE): owner/superuser keep their bypass for admin + migrations.
+ALTER TABLE vfs_files    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE vfs_symlinks ENABLE ROW LEVEL SECURITY;
+
+-- Unset GUC -> current_setting(...,true) is NULL -> predicate NULL -> deny-all.
+DROP POLICY IF EXISTS tenant_isolation ON vfs_files;
+CREATE POLICY tenant_isolation ON vfs_files
+  USING      (tenant_id = current_setting('app.tenant_id', true))
+  WITH CHECK (tenant_id = current_setting('app.tenant_id', true));
+
+DROP POLICY IF EXISTS tenant_isolation ON vfs_symlinks;
+CREATE POLICY tenant_isolation ON vfs_symlinks
+  USING      (tenant_id = current_setting('app.tenant_id', true))
+  WITH CHECK (tenant_id = current_setting('app.tenant_id', true));

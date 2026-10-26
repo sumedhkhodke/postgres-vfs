@@ -5,6 +5,7 @@ import { recentFiles, addTag, removeTag } from "../fs/metadata.js";
 import { errorMessage } from "../utils.js";
 import { embedFile, generateEmbedding } from "../fs/embeddings.js";
 import { normalizePath } from "../fs/path-utils.js";
+import { withTenant } from "../db/tenant.js";
 
 const sql = createClient();
 
@@ -90,7 +91,7 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
       const fs = await getFs(tenant);
       const content = await fs.readFile(path);
       const st = await fs.stat(path);
-      const meta = await sql`SELECT tags, summary FROM vfs_files WHERE tenant_id = ${tenant} AND path = ${path}`;
+      const meta = await withTenant(sql, tenant, (tx) => tx`SELECT tags, summary FROM vfs_files WHERE tenant_id = ${tenant} AND path = ${path}`);
       return json({ path, content, size: st.size, mode: st.mode, mtime: st.mtime.toISOString(), tags: meta[0]?.tags ?? [], summary: meta[0]?.summary ?? null });
     }
 
@@ -168,13 +169,13 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
     }
 
     if (route === "/stats" && req.method === "GET") {
-      const rows = await sql`
+      const rows = await withTenant(sql, tenant, (tx) => tx`
         SELECT
           count(*) FILTER (WHERE NOT is_dir) AS file_count,
           count(*) FILTER (WHERE is_dir) AS dir_count,
           coalesce(sum(size), 0) AS total_size
         FROM vfs_files WHERE tenant_id = ${tenant}
-      `;
+      `);
       return json({ files: Number(rows[0].file_count), dirs: Number(rows[0].dir_count), totalSize: Number(rows[0].total_size) });
     }
 

@@ -40,7 +40,7 @@ But a real filesystem is a poor production substrate for agents:
 - **State is ephemeral in a sandbox** Files die with the sandbox unless you bolt on volumes, and backup/restore is per-box.
 - **No indexed search in a regular filesystem** It doesnt have FTS, trigram, no vectors. Every agent reinvents retrieval on top of raw files.
 
-> `postgres-vfs` collapses bash + filesystem onto a single Postgres table. Agents keep their native `grep` / `cat` / `find` workflow. Isolation is row-level. Search is indexed (FTS + trigram + optional pgvector). State persists across sessions. A new workspace spins up in milliseconds.
+> `postgres-vfs` collapses bash + filesystem onto a single Postgres table. Agents keep their native `grep` / `cat` / `find` workflow. Isolation is enforced at two layers: an application-level `tenant_id` predicate on every query, and Postgres Row-Level Security (RLS) that scopes each tenant-data transaction to its tenant at the database layer. Search is indexed (FTS + trigram + optional pgvector). State persists across sessions. A new workspace spins up in milliseconds.
 
 ---
 
@@ -205,7 +205,7 @@ Open [http://localhost:4321](http://localhost:4321) in your browser.
 - **75+ bash commands.** `grep`, `sed`, `awk`, `jq`, `find`, `sort`, `wc`, pipes, redirections, variables, loops. All backed by Postgres.
 - **Three-tier search.** Full-text (tsvector), fuzzy/regex (pg_trgm), and optional semantic similarity (pgvector).
 - **Auto-embedding pipeline.** Files are embedded on write and queries use vector similarity when `OPENAI_API_KEY` is set; silently degrades without it.
-- **Multi-tenant isolation.** Row-Level Security guarantees each agent only sees its own files.
+- **Multi-tenant isolation.** A per-query `tenant_id` predicate plus Postgres Row-Level Security enforce tenant scoping at the database layer — even if a query omits the tenant filter, an agent only sees its own files. Defense-in-depth against query bugs, not a boundary against direct database access.
 - **bash-tool integration.** Drop-in compatibility with [bash-tool](https://github.com/vercel-labs/bash-tool).
 - **Web UI.** Three-column file manager for browsing, editing, searching, and tagging.
 - **In-memory caching.** Path tree, directory listings, and stat data cached on init for sub-millisecond lookups.
@@ -349,7 +349,17 @@ Symlinks live in a separate `vfs_symlinks` table.
 
 ### 4.2 Multi-tenancy (RLS)
 
-Every operation is scoped to a `tenant_id`. Row-Level Security enforces the boundary at the database layer, so two tenants can't see each other's files even at the SQL level.
+Tenant isolation is enforced at two layers. Every query carries a `tenant_id` predicate (application layer). Beneath it, Postgres Row-Level Security provides defense-in-depth: each tenant-data transaction assumes a restricted `vfs_app` role (via `SET LOCAL ROLE`) and sets an `app.tenant_id` setting, and the `tenant_isolation` policy on `vfs_files`/`vfs_symlinks` filters every row to that tenant — so isolation holds even if a query forgets the predicate. Migrations and the admin `/tenants` endpoint run as the table owner, which intentionally bypasses RLS. (Requires the migrating role to have `CREATEROLE`/superuser to create the `vfs_app` role.) The application must connect with the same role used to run migrations — or a role separately granted membership in `vfs_app` — so it can `SET ROLE vfs_app` at runtime.
+
+**Least-privilege login role (recommended for production).** Run migrations as the owner, then let the app log in as a role that can only become `vfs_app`. With `NOINHERIT`, any query that bypasses `withTenant` fails with `permission denied` instead of silently returning nothing:
+
+```sql
+-- as the owner, after `bun run migrate`
+CREATE ROLE app_login LOGIN NOINHERIT PASSWORD '...';
+GRANT vfs_app TO app_login WITH INHERIT FALSE, SET TRUE;   -- PostgreSQL 16+
+```
+
+On PostgreSQL 16+, `schema.sql` grants the migrating owner `vfs_app` membership `WITH SET TRUE` explicitly: a non-superuser that creates a role only receives an ADMIN membership, which doesn't allow `SET ROLE`. Cross-tenant maintenance (cleanup jobs, admin listings) should run as the owner or through a narrow `SECURITY DEFINER` function owned by it. `withTenant(sql, tenantId, fn)` is exported for application queries outside `PostgresFs`.
 
 ```bash
 # Alice's workspace
@@ -674,7 +684,7 @@ The 75+ supported commands are filesystem and text utilities (`grep`, `sed`, `aw
 - **IFileSystem:** the ~20-method TypeScript interface just-bash calls; `PostgresFs` implements it against Postgres.
 - **PostgresFs:** this repo's `IFileSystem` implementation. Every filesystem op becomes a SQL query.
 - **Sandbox adapter:** the thin layer that bridges bash-tool's tool calls to `PostgresFs`.
-- **Tenant:** an isolation boundary (one agent or user). Scoped via `tenant_id` column and row-level security.
+- **Tenant:** an isolation boundary (one agent or user). Scoped via the `tenant_id` column (application predicate) and Postgres Row-Level Security keyed on a per-transaction `app.tenant_id` setting.
 - **RLS (Row-Level Security):** Postgres feature that enforces per-tenant row visibility at the database layer.
 - **FTS (Full-Text Search):** Postgres `tsvector` + `websearch_to_tsquery` indexed lexical search.
 - **pg_trgm:** Postgres trigram extension. Powers fuzzy and regex matching via a GIN index.

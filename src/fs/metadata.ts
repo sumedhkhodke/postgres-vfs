@@ -1,4 +1,5 @@
 import type { DbClient } from "../db/client.js";
+import { withTenant } from "../db/tenant.js";
 import { toVectorLiteral } from "../utils.js";
 import { normalizePath } from "./path-utils.js";
 
@@ -10,51 +11,45 @@ export async function updateEmbedding(
 ): Promise<void> {
   const resolved = normalizePath(path);
   const vecLiteral = toVectorLiteral(embedding);
-  await sql`
-    UPDATE vfs_files
-    SET embedding = ${vecLiteral}::vector
+  await withTenant(sql, tenantId, (tx) => tx`
+    UPDATE vfs_files SET embedding = ${vecLiteral}::vector
     WHERE tenant_id = ${tenantId} AND path = ${resolved}
-  `;
+  `);
 }
 
-export async function updateSummary(
-  sql: DbClient,
-  tenantId: string,
-  path: string,
-  summary: string
-): Promise<void> {
+export async function updateSummary(sql: DbClient, tenantId: string, path: string, summary: string): Promise<void> {
   const resolved = normalizePath(path);
-  await sql`
+  await withTenant(sql, tenantId, (tx) => tx`
     UPDATE vfs_files SET summary = ${summary}
     WHERE tenant_id = ${tenantId} AND path = ${resolved}
-  `;
+  `);
 }
 
 export async function addTag(sql: DbClient, tenantId: string, path: string, tag: string): Promise<void> {
   const resolved = normalizePath(path);
-  await sql`
+  await withTenant(sql, tenantId, (tx) => tx`
     UPDATE vfs_files
     SET tags = array_append(tags, ${tag})
     WHERE tenant_id = ${tenantId} AND path = ${resolved}
       AND NOT (${tag} = ANY(tags))
-  `;
+  `);
 }
 
 export async function removeTag(sql: DbClient, tenantId: string, path: string, tag: string): Promise<void> {
   const resolved = normalizePath(path);
-  await sql`
+  await withTenant(sql, tenantId, (tx) => tx`
     UPDATE vfs_files
     SET tags = array_remove(tags, ${tag})
     WHERE tenant_id = ${tenantId} AND path = ${resolved}
-  `;
+  `);
 }
 
 export async function findByTag(sql: DbClient, tenantId: string, tag: string): Promise<string[]> {
-  const rows = await sql`
+  const rows = await withTenant(sql, tenantId, (tx) => tx`
     SELECT path FROM vfs_files
     WHERE tenant_id = ${tenantId} AND ${tag} = ANY(tags)
     ORDER BY path
-  `;
+  `);
   return rows.map((r) => r.path as string);
 }
 
@@ -63,12 +58,12 @@ export async function recentFiles(
   tenantId: string,
   limit: number = 20
 ): Promise<{ path: string; updated_at: Date }[]> {
-  const rows = await sql`
+  const rows = await withTenant(sql, tenantId, (tx) => tx`
     SELECT path, updated_at FROM vfs_files
     WHERE tenant_id = ${tenantId} AND is_dir = false
     ORDER BY updated_at DESC
     LIMIT ${limit}
-  `;
+  `);
   return rows.map((r) => ({
     path: r.path as string,
     updated_at: r.updated_at as Date,

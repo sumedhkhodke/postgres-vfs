@@ -163,3 +163,31 @@ describe("API path normalization", () => {
     expect(data.tags).not.toContain("rtag");
   });
 });
+
+describe("RLS-wrapped endpoints", () => {
+  test("GET /stats returns counts for the tenant", async () => {
+    await api("POST", "/file", { path: "/stats-probe.txt", content: "hi" });
+    const res = await api("GET", "/stats");
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.files).toBeGreaterThanOrEqual(1);
+  });
+
+  test("GET /file returns tags via the wrapped meta query", async () => {
+    await api("POST", "/file", { path: "/meta-probe.txt", content: "hi" });
+    await api("POST", "/tag", { path: "/meta-probe.txt", tag: "beta" });
+    const res = await api("GET", "/file?path=/meta-probe.txt");
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.tags).toContain("beta");
+  });
+
+  test("GET /tenants still lists tenants (admin owner bypass)", async () => {
+    await api("POST", "/file", { path: "/tenants-probe.txt", content: "hi" });
+    const url = new URL(`${BASE}/api/tenants`);
+    const res = await handleApi(new Request(url, { method: "GET" }), url);
+    expect(res.status).toBe(200);
+    const list = await res.json();
+    expect(list).toContain(TEST_TENANT);
+  });
+});
